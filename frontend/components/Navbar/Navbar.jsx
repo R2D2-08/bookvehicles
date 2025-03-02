@@ -8,7 +8,7 @@ export default function Navbar() {
 
   return (
     <nav className="bg-black text-white px-6 py-4 flex items-center justify-between">
-      <div className="text-2xl font-bold">RideShare</div>
+      <div className="text-2xl font-bold">RideBook</div>
       
       <div className="hidden md:flex space-x-6">
         <a href="#" className="hover:text-gray-300">Ride</a>

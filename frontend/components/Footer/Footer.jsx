@@ -29,7 +29,7 @@ export default function Footer() {
       </div>
 
       <p className="text-center text-gray-500 text-sm mt-4">
-        &copy; {new Date().getFullYear()} RideShare. All rights reserved.
+        &copy; {new Date().getFullYear()} RideBook. All rights reserved.
       </p>
     </footer>
   );
