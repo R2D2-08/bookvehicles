@@ -2,15 +2,34 @@
 
 import Image from "next/image";
 import { useEffect, useState } from "react";
-import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
+import { useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
-import { CarFrontIcon } from "lucide-react";
+import Link from "next/link";
+import dynamic from "next/dynamic";
+
+const MapContainer = dynamic(
+  () => import("react-leaflet").then((mod) => mod.MapContainer),
+  { ssr: false }
+);
+
+const TileLayer = dynamic(
+  () => import("react-leaflet").then((mod) => mod.TileLayer),
+  { ssr: false }
+);
+
+const Marker = dynamic(
+  () => import("react-leaflet").then((mod) => mod.Marker),
+  { ssr: false }
+);
+const Popup = dynamic(() => import("react-leaflet").then((mod) => mod.Popup), {
+  ssr: false,
+});
 
 export default function Home() {
   const position = [51.505, -0.09];
   const [userLocation, setUserLocation] = useState(null);
   useEffect(() => {
-    if (navigator.geolocation) {
+    if (typeof window !== undefined && navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
           const { latitude, longitude } = position.coords;
@@ -25,16 +44,16 @@ export default function Home() {
     }
   }, []);
 
-  const SetView = ({center}) => {
+  const SetView = ({ center }) => {
     const map = useMap();
     useEffect(() => {
-      if(center) {
+      if (center) {
         map.setView(center, 13);
       }
     }, [center, map]);
 
     return null;
-  }
+  };
   return (
     <div className="min-h-screen w-full flex flex-col items-center bg-gray-50">
       <div className="min-h-screen w-full flex flex-col items-center bg-gray-50">
@@ -48,12 +67,16 @@ export default function Home() {
               suggestions.
             </p>
             <div className="flex gap-4">
-              <button className="rounded-2xl text-white bg-black w-[150px] h-[60px] text-lg font-semibold hover:bg-gray-800 transition-all duration-300">
-                Login
-              </button>
-              <button className="rounded-2xl text-black border-2 border-black w-[150px] h-[60px] text-lg font-semibold hover:bg-gray-200 transition-all duration-300">
-                Sign Up
-              </button>
+              <Link href={"/login"}>
+                <button className="cursor-pointer rounded-2xl text-white bg-black w-[150px] h-[60px] text-lg font-semibold hover:bg-gray-800 transition-all duration-300">
+                  Login
+                </button>
+              </Link>
+              <Link href={"/signup"}>
+                <button className="cursor-pointer rounded-2xl text-black border-2 border-black w-[150px] h-[60px] text-lg font-semibold hover:bg-gray-200 transition-all duration-300">
+                  Sign Up
+                </button>
+              </Link>
             </div>
           </div>
           <MapContainer
@@ -66,17 +89,16 @@ export default function Home() {
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
-           {userLocation && (
-            <>
-              <SetView center={userLocation}/>
-              <Marker position={userLocation}>
-                <Popup>Your Location</Popup>
-              </Marker>
-            </>
-           )}
+            {userLocation && (
+              <>
+                <SetView center={userLocation} />
+                <Marker position={userLocation}>
+                  <Popup>Your Location</Popup>
+                </Marker>
+              </>
+            )}
           </MapContainer>
         </section>
-
 
         <section className="max-w-6xl w-[85%] text-center py-12">
           <h2 className="text-4xl font-bold text-gray-900 mb-8">
@@ -104,7 +126,6 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Real-time Location Access */}
         <section className="flex flex-col items-center text-center py-12 px-6 bg-gray-200 w-full">
           <h2 className="text-4xl font-bold text-gray-900 mb-4">
             Get a ride instantly
