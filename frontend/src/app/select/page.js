@@ -1,7 +1,14 @@
+"use client"
+
 import React from "react";
 import { Car, Compass, Bike } from "lucide-react";
-
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 const SelectRide = () => {
+
+  const router = useRouter();
+  
+  const [selected, setSelected] = useState(0);
   const loc_1 = [11.3149, 75.9377];
   const loc_2 = [11.4655, 75.8919];
 
@@ -24,6 +31,12 @@ const SelectRide = () => {
     return Math.ceil(R * c);
   };
 
+  const pricing = [
+    { baseFare: 50, perKm: 15, perMin: 2, serviceFee: 10 },
+    { baseFare: 30, perKm: 12, perMin: 1.5, serviceFee: 8 },
+    { baseFare: 20, perKm: 10, perMin: 1, serviceFee: 5 },
+    { baseFare: 15, perKm: 8, perMin: 0.8, serviceFee: 3 },
+  ]
   const rides = [
     { name: "Premium Cab", desc: "Luxury vehicles with top drivers", icon: <Car />, speed: 13.888 },
     { name: "Standard Cab", desc: "Comfortable rides up to 4", icon: <Car />, speed: 13.888 },
@@ -42,7 +55,9 @@ const SelectRide = () => {
         {rides.map((ride, index) => (
           <div
             key={index}
-            className="flex flex-col sm:flex-row items-center justify-between p-4 border border-neutral-300 rounded-lg hover:shadow-md transition-shadow"
+            onClick={() => setSelected(index)
+            }
+            className={` ${index === selected ? "border-black border-2" : "border-neutral-300"} cursor-pointer flex flex-col sm:flex-row items-center justify-between p-4 borde rounded-lg hover:shadow-md transition-shadow`}
           >
             <div className="flex items-center gap-4">
               <div className="w-8 h-8 text-gray-600">{ride.icon}</div>
@@ -60,12 +75,12 @@ const SelectRide = () => {
         <div className="p-4 border border-neutral-300 rounded-lg hover:shadow-md transition-shadow">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
             <h3 className="text-lg font-medium">Estimated Price</h3>
-            <h2 className="font-medium text-xl text-gray-800">$15.96</h2>
+            <h2 className="font-medium text-xl text-gray-800">{`₹${pricing[selected].baseFare + pricing[selected].perKm * Math.ceil(Haversine(loc_1[0], loc_1[1], loc_2[0], loc_2[1]) / 1000) + pricing[selected].serviceFee}`}</h2>
           </div>
           <p className="text-base text-neutral-700 mt-1">Price may vary due to traffic and waiting time</p>
         </div>
         <div className="flex gap-x-3">
-            <button className="py-2 px-3 bg-black text-white rounded-md">Back</button>
+            <button className="py-2 px-3 bg-black text-white rounded-md" onClick={() => router.push("/booking")}>Back</button>
             <button className="py-2 px-3 border border-black rounded-md">Continue</button>
         </div>
       </div>
