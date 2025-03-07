@@ -57,6 +57,49 @@ export default function Home() {
   return (
     <div className="min-h-screen w-full flex flex-col items-center bg-gray-50">
       <div className="min-h-screen w-full flex flex-col items-center bg-gray-50">
+        <section className="flex flex-col md:flex-row items-center gap-12 p-10 max-w-6xl w-[85%]">
+          <div className="text-center md:text-left flex flex-col gap-6">
+            <h1 className="text-5xl font-bold text-gray-900 leading-snug">
+              Get a ride in minutes—anywhere, anytime.
+            </h1>
+            <p className="text-lg text-gray-700">
+              Login to book a cab, view past trips, and get tailored ride
+              suggestions.
+            </p>
+            <div className="flex gap-4">
+              <Link href={"/login"}>
+                <button className="cursor-pointer rounded-2xl text-white bg-black w-[150px] h-[60px] text-lg font-semibold hover:bg-gray-800 transition-all duration-300">
+                  Login
+                </button>
+              </Link>
+              <Link href={"/signup"}>
+                <button className="cursor-pointer rounded-2xl text-black border-2 border-black w-[150px] h-[60px] text-lg font-semibold hover:bg-gray-200 transition-all duration-300">
+                  Sign Up
+                </button>
+              </Link>
+            </div>
+          </div>
+          <MapContainer
+            center={userLocation || position}
+            zoom={13}
+            scrollWheelZoom={false}
+            className="w-[600px] h-[400px] rounded-xl shadow-lg"
+          >
+            <TileLayer
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            />
+            {userLocation && (
+              <>
+                <SetView center={userLocation} />
+                <Marker position={userLocation}>
+                  <Popup>Your Location</Popup>
+                </Marker>
+              </>
+            )}
+          </MapContainer>
+        </section>
+
         <section className="max-w-6xl w-[85%] text-center py-12">
           <h2 className="text-4xl font-bold text-gray-900 mb-8">
             How It Works
