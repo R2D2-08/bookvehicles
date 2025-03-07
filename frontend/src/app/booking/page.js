@@ -5,18 +5,7 @@ import dynamic from "next/dynamic";
 import "leaflet/dist/leaflet.css";
 import { ArrowRight } from "lucide-react";
 import { useMap } from "react-leaflet";
-import L from "leaflet"
 
-const customIcon = new L.Icon({
-    iconUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png",
-    iconSize: [25, 41],
-    iconAnchor: [12, 41],
-    popupAnchor: [1, -34],
-    shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
-    shadowSize: [41, 41],
-  });
-
-// Prevent SSR issues while rendering the map
 const MapContainer = dynamic(
   () => import("react-leaflet").then((mod) => mod.MapContainer),
   { ssr: false }
@@ -29,9 +18,10 @@ const Marker = dynamic(
   () => import("react-leaflet").then((mod) => mod.Marker),
   { ssr: false }
 );
-const Popup = dynamic(() => import("react-leaflet").then((mod) => mod.Popup), {
-  ssr: false,
-});
+const Popup = dynamic(
+  () => import("react-leaflet").then((mod) => mod.Popup),
+  { ssr: false }
+);
 
 const Booking = () => {
   const locationApi =
@@ -42,21 +32,44 @@ const Booking = () => {
   const [dropLocation, setDropLocation] = useState("");
   const [pickLatLong, setPickLatLong] = useState(null);
   const [dropLatLong, setDropLatLong] = useState(null);
+  const [customIcon, setCustomIcon] = useState(null);
+
+  // Load Leaflet dynamically on the client-side
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      import("leaflet").then((L) => {
+        setCustomIcon(
+          new L.Icon({
+            iconUrl:
+              "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png",
+            iconSize: [25, 41],
+            iconAnchor: [12, 41],
+            popupAnchor: [1, -34],
+            shadowUrl:
+              "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
+            shadowSize: [41, 41],
+          })
+        );
+      });
+    }
+  }, []);
 
   useEffect(() => {
     const fetchCoordinates = async (location, setLatLong) => {
       if (!location) return;
 
-      const response = await fetch(`${locationApi}${encodeURIComponent(location)}`);
-      if (!response.ok) {
-        alert("Location fetch failed");
-        return;
-      }
-
-      const res = await response.json();
-      if (res.length > 0) {
-        const { lat, lon } = res[0];
-        setLatLong([parseFloat(lat), parseFloat(lon)]);
+      try {
+        const response = await fetch(`${locationApi}${encodeURIComponent(location)}`);
+        if (!response.ok) {
+          throw new Error("Location fetch failed");
+        }
+        const res = await response.json();
+        if (res.length > 0) {
+          const { lat, lon } = res[0];
+          setLatLong([parseFloat(lat), parseFloat(lon)]);
+        }
+      } catch (error) {
+        console.error(error);
       }
     };
 
@@ -116,6 +129,7 @@ const Booking = () => {
           </button>
         </section>
 
+        {/* Map Section */}
         <div className="w-1/2 h-[350px]">
           <MapContainer
             center={defaultPosition}
@@ -128,7 +142,8 @@ const Booking = () => {
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
 
-            {pickLatLong && (
+
+            {pickLatLong && customIcon && (
               <>
                 <SetView center={pickLatLong} />
                 <Marker position={pickLatLong} icon={customIcon}>
@@ -137,7 +152,7 @@ const Booking = () => {
               </>
             )}
 
-            {dropLatLong && (
+            {dropLatLong && customIcon && (
               <>
                 <SetView center={dropLatLong} />
                 <Marker position={dropLatLong} icon={customIcon}>
