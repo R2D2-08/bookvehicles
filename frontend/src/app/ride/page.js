@@ -57,7 +57,7 @@ export default function LiveETA() {
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5 }}
         >
-          <h1 className="text-3xl font-bold">You've arrived! 🎉</h1>
+          <h1 className="text-3xl font-bold">You&apos;ve arrived! 🎉</h1>
           <p className="text-lg text-gray-600 mt-2">Thank you for riding with us.</p>
         </motion.div>
       </div>
