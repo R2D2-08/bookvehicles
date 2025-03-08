@@ -3,8 +3,9 @@
 import React, { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import "leaflet/dist/leaflet.css";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, MapPin } from "lucide-react";
 import { useMap } from "react-leaflet";
+import { useRouter } from "next/navigation";
 
 const MapContainer = dynamic(
   () => import("react-leaflet").then((mod) => mod.MapContainer),
@@ -24,8 +25,8 @@ const Popup = dynamic(
 );
 
 const Booking = () => {
-  const locationApi =
-    "https://nominatim.openstreetmap.org/search?format=json&q=";
+  const router = useRouter();
+  const locationApi = "https://nominatim.openstreetmap.org/search?format=json&q=";
   const defaultPosition = [51.505, -0.09];
 
   const [pickLocation, setPickLocation] = useState("");
@@ -34,7 +35,6 @@ const Booking = () => {
   const [dropLatLong, setDropLatLong] = useState(null);
   const [customIcon, setCustomIcon] = useState(null);
 
-  // Load Leaflet dynamically on the client-side
   useEffect(() => {
     if (typeof window !== "undefined") {
       import("leaflet").then((L) => {
@@ -57,12 +57,10 @@ const Booking = () => {
   useEffect(() => {
     const fetchCoordinates = async (location, setLatLong) => {
       if (!location) return;
-
       try {
         const response = await fetch(`${locationApi}${encodeURIComponent(location)}`);
-        if (!response.ok) {
-          throw new Error("Location fetch failed");
-        }
+        if (!response.ok) throw new Error("Location fetch failed");
+
         const res = await response.json();
         if (res.length > 0) {
           const { lat, lon } = res[0];
@@ -80,88 +78,81 @@ const Booking = () => {
   const SetView = ({ center }) => {
     const map = useMap();
     useEffect(() => {
-      if (center) {
-        map.setView(center, 13);
-      }
+      if (center) map.setView(center, 13);
     }, [center, map]);
     return null;
   };
 
   return (
-    <div className="flex items-center justify-center py-10 bg-white">
-      <div className="flex rounded-2xl shadow-2xl w-[60%] bg-white p-10">
-        <section className="w-1/2 pr-8">
-          <div className="mb-10">
-            <h1 className="text-3xl font-bold">Booking</h1>
-            <p className="text-gray-500">Book your ride within seconds</p>
-          </div>
+    <div className="flex flex-col md:flex-row h-screen w-full bg-gray-100">
+      <div className="w-full md:w-1/3 p-6 flex flex-col justify-center bg-white md:min-h-screen">
+        <h1 className="text-2xl md:text-3xl font-bold mb-6 text-center md:text-left">Book a Ride</h1>
 
-          <div className="mb-6">
-            <label htmlFor="pickup" className="block mb-2 text-md font-medium">
-              Pickup Location
-            </label>
+        <div className="relative mb-4">
+          <label className="block text-gray-600 text-sm font-medium mb-2">Pickup Location</label>
+          <div className="relative">
             <input
-              id="pickup"
               value={pickLocation}
               onChange={(e) => setPickLocation(e.target.value)}
               type="text"
-              placeholder="Enter Pickup Location"
-              className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Enter pickup location"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
             />
+            <MapPin className="absolute right-3 top-3 text-gray-400" size={20} />
           </div>
+        </div>
 
-          <div className="mb-6">
-            <label htmlFor="drop" className="block mb-2 text-md font-medium">
-              Drop Location
-            </label>
+        <div className="relative mb-6">
+          <label className="block text-gray-600 text-sm font-medium mb-2">Drop Location</label>
+          <div className="relative">
             <input
-              id="drop"
               value={dropLocation}
               onChange={(e) => setDropLocation(e.target.value)}
               type="text"
-              placeholder="Enter Drop Location"
-              className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Enter drop location"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
             />
+            <MapPin className="absolute right-3 top-3 text-gray-400" size={20} />
           </div>
-
-          <button className="bg-black text-white text-md px-3 py-2 rounded-md flex items-center gap-2">
-            Select your ride <ArrowRight />
-          </button>
-        </section>
-
-        {/* Map Section */}
-        <div className="w-1/2 h-[350px]">
-          <MapContainer
-            center={defaultPosition}
-            zoom={10}
-            scrollWheelZoom={false}
-            className="h-full rounded-xl"
-          >
-            <TileLayer
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            />
-
-
-            {pickLatLong && customIcon && (
-              <>
-                <SetView center={pickLatLong} />
-                <Marker position={pickLatLong} icon={customIcon}>
-                  <Popup>Pickup Location</Popup>
-                </Marker>
-              </>
-            )}
-
-            {dropLatLong && customIcon && (
-              <>
-                <SetView center={dropLatLong} />
-                <Marker position={dropLatLong} icon={customIcon}>
-                  <Popup>Drop Location</Popup>
-                </Marker>
-              </>
-            )}
-          </MapContainer>
         </div>
+
+
+        <button onClick={() => router.push("/select")} className="cursor-point w-full bg-black text-white py-3 rounded-lg flex justify-center items-center gap-2 text-lg font-medium">
+          Find a Ride <ArrowRight size={20} />
+        </button>
+      </div>
+
+      <div className="w-full md:w-2/3 h-[50vh] md:h-screen relative">
+        <MapContainer
+          center={defaultPosition}
+          zoom={12}
+          scrollWheelZoom={false}
+          className="w-full h-full rounded-lg"
+        >
+          <TileLayer
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          />
+
+          {pickLatLong && customIcon && (
+            <>
+              <SetView center={pickLatLong} />
+              <Marker position={pickLatLong} icon={customIcon}>
+                <Popup>Pickup Location</Popup>
+              </Marker>
+            </>
+          )}
+
+          {/* Drop Marker */}
+          {dropLatLong && customIcon && (
+            <>
+              <SetView center={dropLatLong} />
+              <Marker position={dropLatLong} icon={customIcon}>
+                <Popup>Drop Location</Popup>
+              </Marker>
+            </>
+          )}
+        </MapContainer>
       </div>
     </div>
   );

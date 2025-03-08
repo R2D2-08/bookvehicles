@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 
 function LiveETA() {
-  const totalTime = 300; // 5 minutes in seconds
+  const totalTime = 300; 
   const [timeLeft, setTimeLeft] = useState(totalTime);
 
   useEffect(() => {
