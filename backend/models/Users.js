@@ -1,5 +1,6 @@
 const { DataTypes, DatabaseError } = require("sequelize");
 const { sequelize } = require("../config/database");
+const bcrypt = require('bcryptjs');
 
 const User = sequelize.define(
   "User",
@@ -41,7 +42,7 @@ const User = sequelize.define(
     },
     photo_url: {
       type: DataTypes.STRING,
-      allowNull: false,
+      allowNull: true,
       validate: {
         isUrl: true,
       },

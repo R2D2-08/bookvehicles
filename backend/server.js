@@ -4,7 +4,7 @@ const cors = require("cors");
 const helmet = require("helmet");
 const morgan = require("morgan");
 const { testConnection, sequelize } = require("./config/database");
-
+const userRouter = require("./routes/User");
 const app = express();
 const PORT = process.env.PORT || 5000;
 
@@ -13,6 +13,7 @@ app.use(cors());
 app.use(helmet());
 app.use(morgan("dev"));
 
+app.use("/users", userRouter);
 app.get("/", (req, res) => {
   res.send("Taxi Booking API is running...");
 });
