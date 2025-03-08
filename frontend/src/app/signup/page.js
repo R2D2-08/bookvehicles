@@ -2,12 +2,13 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
 
 function Signup() {
   const router = useRouter();
   const [user, setUser] = useState({
     name: "",
+    email: "",
+    phone: "",
     password: "",
   });
 
@@ -29,6 +30,8 @@ function Signup() {
         },
         body: JSON.stringify({
           username: user.name,
+          email: user.email,
+          phone: user.phone,
           password: user.password,
         }),
       });
@@ -43,22 +46,19 @@ function Signup() {
 
       router.push("/");
     } catch (error) {
-      console.error("Error during login:", error);
+      console.error("Error during signup:", error);
     }
   };
 
   return (
-    // yet to add the fields
     <div className="flex items-center justify-center py-10 bg-white">
-      <div className="relative flex flex-col m-6 space-y-8 bg-white shadow-2xl rounded-2xl md:flex-row md:space-y-0">
-        <div className="flex flex-col justify-center p-8 md:p-14">
-          <h1 className="mb-3 text-4xl font-bold">Register your account</h1>
-          <p className="font-light text-gray-400 mb-8">Enter your details</p>
+      <div className="relative flex flex-col m-6 space-y-4 bg-white shadow-2xl rounded-2xl md:flex-row md:space-y-0">
+        <div className="flex flex-col justify-center p-6 md:p-10">
+          <h1 className="mb-1 text-3xl font-bold">Register your account</h1>
+          <p className="font-light text-gray-400 mb-2">Enter your details</p>
           <form onSubmit={handleSubmit}>
-            <div className="py-4">
-              <label htmlFor="name" className="mb-2 text-md">
-                Name
-              </label>
+            <div className="py-1">
+              <label htmlFor="name" className="mb-1 text-md">Name</label>
               <input
                 value={user.name}
                 onChange={handleChange}
@@ -70,10 +70,34 @@ function Signup() {
               />
             </div>
 
-            <div className="py-4">
-              <label htmlFor="password" className="mb-2 text-md">
-                Password
-              </label>
+            <div className="py-1">
+              <label htmlFor="email" className="mb-1 text-md">Email</label>
+              <input
+                value={user.email}
+                onChange={handleChange}
+                type="email"
+                name="email"
+                id="email"
+                className="w-full p-2 border border-gray-300 rounded-md"
+                placeholder="Enter your email"
+              />
+            </div>
+
+            <div className="py-1">
+              <label htmlFor="phone" className="mb-1 text-md">Phone Number</label>
+              <input
+                value={user.phone}
+                onChange={handleChange}
+                type="tel"
+                name="phone"
+                id="phone"
+                className="w-full p-2 border border-gray-300 rounded-md"
+                placeholder="Enter your phone number"
+              />
+            </div>
+
+            <div className="py-1">
+              <label htmlFor="password" className="mb-1 text-md">Password</label>
               <input
                 value={user.password}
                 onChange={handleChange}
@@ -84,17 +108,18 @@ function Signup() {
                 placeholder="Enter your password"
               />
             </div>
+            
             <button
               type="submit"
-              className="w-full bg-black text-white p-2 rounded-lg mb-6 hover:bg-white hover:text-black border hover:border-gray-300 transition"
+              className="w-full bg-black text-white p-2 rounded-lg mt-3 hover:bg-white hover:text-black border hover:border-gray-300 transition"
             >
-              Sign in
+              Sign up
             </button>
           </form>
-          <div className="text-center text-gray-400">
-            Don&apos;t have an account?
-            <Link href="/register">
-              <span className="font-bold text-black"> Sign up </span>
+          <div className="text-center text-gray-400 mt-1">
+            Already have an account?
+            <Link href="/login">
+              <span className="font-bold text-black"> Sign in </span>
             </Link>
           </div>
         </div>
@@ -102,7 +127,7 @@ function Signup() {
         <div className="relative hidden md:block">
           <img
             src="/images/hero_image.jpg"
-            alt="Login Illustration"
+            alt="Signup Illustration"
             className="w-[400px] h-full rounded-r-2xl object-cover"
           />
         </div>

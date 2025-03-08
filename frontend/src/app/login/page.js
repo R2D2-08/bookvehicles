@@ -88,7 +88,7 @@ function Login() {
               type="submit"
               className="w-full bg-black text-white p-2 rounded-lg mb-6 hover:bg-white hover:text-black border hover:border-gray-300 transition"
             >
-              Sign in
+              Log in
             </button>
           </form>
           <div className="text-center text-gray-400">
