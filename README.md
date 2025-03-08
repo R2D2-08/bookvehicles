@@ -34,8 +34,8 @@ Ensure you have the following installed:
 
 ### Clone the Repository
 ```bash
-git clone https://github.com/YOUR_GITHUB_USERNAME/vehicle-booking-service.git
-cd vehicle-booking-service
+git clone https://github.com/R2D2-08/bookvehicles.git
+cd bookvehicles
 ```
 
 ### Install Dependencies
@@ -49,7 +49,6 @@ Create a `.env` file in the root directory and configure the following:
 DATABASE_URL="your-database-url"
 RAZORPAY_KEY_ID="your-razorpay-key"
 RAZORPAY_KEY_SECRET="your-razorpay-secret"
-GOOGLE_MAPS_API_KEY="your-google-maps-api-key"
 JWT_SECRET="your-secret-key"
 ```
 
@@ -84,12 +83,6 @@ npm start
 |--------|------------|-------------|
 | POST | `/api/driver/accept/:rideId` | Accept a ride request |
 | GET | `/api/driver/history` | View past rides |
-
-## Deployment
-### Deploy to Vercel
-```bash
-vercel deploy
-```
 
 ## Contributors
 - [Nishanth](https://github.com/1-Nishanth-1)
