@@ -2,6 +2,7 @@ const { DataTypes, DatabaseError } = require("sequelize");
 const { sequelize } = require("../config/database");
 const bcrypt = require('bcryptjs');
 
+// need some changes
 const User = sequelize.define(
   "User",
   {
@@ -36,17 +37,17 @@ const User = sequelize.define(
     password: {
       type: DataTypes.STRING,
       allowNull: false,
-      validate: {
-        len: [8, 20],
-      },
+      
     },
     photo_url: {
       type: DataTypes.STRING,
       allowNull: true,
-      validate: {
-        isUrl: true,
-      },
     },
+    role: {
+      type: DataTypes.ENUM("admin", "user", "driver"),
+      allowNull: false,
+      defaultValue: "user"
+    }
   },
   {
     hooks: {

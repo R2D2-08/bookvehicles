@@ -20,7 +20,7 @@ app.get("/", (req, res) => {
 
 const startServer = async () => {
   testConnection();
-  await sequelize.sync({ alter: true });
+  await sequelize.sync();
   console.log("All tables synced successfully");
   try {
     app.listen(PORT, () => {
