@@ -2,13 +2,16 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
+import { toast } from "sonner";
 
 function Signup() {
   const router = useRouter();
   const [user, setUser] = useState({
-    name: "",
+    username: "",
+    email: "",
     password: "",
+    phone_no: "",
+    photo_url: null,
   });
 
   const handleChange = (e) => {
@@ -18,37 +21,46 @@ function Signup() {
     });
   };
 
+  const handleImageChange = (e) => {
+    setUser({
+      ...user,
+      photo_url: e.target.files[0],
+    });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     try {
-      const response = await fetch("<api>", {
+      const formData = new FormData();
+      formData.append("name", user.username);
+      formData.append("email", user.email);
+      formData.append("password", user.password);
+      formData.append("phone_no", user.phone_no);
+      if (user.photo_url) {
+        formData.append("photo", user.photo_url);
+      }
+
+      const response = await fetch("http://localhost:5000/users/register", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          username: user.name,
-          password: user.password,
-        }),
+        body: formData,
+        credentials: "include"
       });
 
       if (!response.ok) {
-        throw new Error("Failed to authenticate");
+        toast.error("Failed to Signup");
+        return;
       }
 
       const data = await response.json();
-      localStorage.setItem("AccessToken", data.access);
-      localStorage.setItem("RefreshToken", data.refresh);
-
-      router.push("/");
+      toast.success("Login Successful");
+      router.push("/booking");
     } catch (error) {
-      console.error("Error during login:", error);
+      toast.error("Internal Server Issue");
     }
   };
 
   return (
-    // yet to add the fields
     <div className="flex items-center justify-center py-10 bg-white">
       <div className="relative flex flex-col m-6 space-y-8 bg-white shadow-2xl rounded-2xl md:flex-row md:space-y-0">
         <div className="flex flex-col justify-center p-8 md:p-14">
@@ -60,13 +72,41 @@ function Signup() {
                 Name
               </label>
               <input
-                value={user.name}
+                value={user.username}
                 onChange={handleChange}
                 type="text"
-                name="name"
-                id="name"
+                name="username"
+                id="username"
                 className="w-full p-2 border border-gray-300 rounded-md"
                 placeholder="Enter your name"
+              />
+            </div>
+            <div className="py-4">
+              <label htmlFor="phone_no" className="mb-2 text-md">
+                Phone Number
+              </label>
+              <input
+                value={user.phone_no}
+                onChange={handleChange}
+                type="text"
+                name="phone_no"
+                id="phone_no"
+                className="w-full p-2 border border-gray-300 rounded-md"
+                placeholder="Enter your phone"
+              />
+            </div>
+            <div className="py-4">
+              <label htmlFor="email" className="mb-2 text-md">
+                Email
+              </label>
+              <input
+                value={user.email}
+                onChange={handleChange}
+                type="email"
+                name="email"
+                id="email"
+                className="w-full p-2 border border-gray-300 rounded-md"
+                placeholder="Enter your email"
               />
             </div>
 
@@ -84,17 +124,38 @@ function Signup() {
                 placeholder="Enter your password"
               />
             </div>
+            <div className="py-4">
+              <label className="mb-2 text-md block">Profile Picture</label>
+              <div className="relative w-full border border-gray-300 p-4 rounded-lg cursor-pointer hover:bg-gray-50 transition">
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  onChange={handleImageChange}
+                />
+                <p className="text-gray-500 text-center">
+                  {user.photo_url ? "Change Image" : "Click to Upload Image"}
+                </p>
+              </div>
+            </div>
             <button
               type="submit"
               className="w-full bg-black text-white p-2 rounded-lg mb-6 hover:bg-white hover:text-black border hover:border-gray-300 transition"
             >
-              Sign in
+              Sign Up
             </button>
+            {user.photo_url && (
+              <img
+                src={URL.createObjectURL(user.photo_url)}
+                alt="Preview"
+                className="mt-4 mx-auto rounded-md w-32 h-32 object-cover"
+              />
+            )}
           </form>
           <div className="text-center text-gray-400">
-            Don&apos;t have an account?
-            <Link href="/register">
-              <span className="font-bold text-black"> Sign up </span>
+            Already have an account?
+            <Link href="/login">
+              <span className="font-bold text-black"> Sign in </span>
             </Link>
           </div>
         </div>

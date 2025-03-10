@@ -47,7 +47,10 @@ const generateTokens = (user) => {
 router.post("/register", upload.single("profileImage"), async (req, res) => {
   try {
     const { name, email, password, phone_no, role } = req.body;
-    console.log(req.body);
+    console.log(name);
+    console.log(email);
+    console.log(password);
+    console.log(phone_no);
     const existingUser = await User.findOne({ where: { email } });
     if (existingUser) return res.status(400).json({ error: "User already exists" });
 

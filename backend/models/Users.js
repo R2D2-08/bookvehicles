@@ -49,13 +49,6 @@ const User = sequelize.define(
       defaultValue: "user"
     }
   },
-  {
-    hooks: {
-      beforeCreate: async (user) => {
-        user.password = await bcrypt.hash(user.password, 10);
-      },
-    },
-  }
 );
 
 module.exports = User;
