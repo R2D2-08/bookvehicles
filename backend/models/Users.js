@@ -1,8 +1,8 @@
 const { DataTypes, DatabaseError } = require("sequelize");
 const { sequelize } = require("../config/database");
-const bcrypt = require('bcryptjs');
+const bcrypt = require("bcryptjs");
+const Location = require("./Locations");
 
-// need some changes
 const User = sequelize.define(
   "User",
   {
@@ -34,10 +34,13 @@ const User = sequelize.define(
         isEmail: true,
       },
     },
+    rating: {
+      type: DataTypes.FLOAT,
+      defaultValue: 0,
+    },
     password: {
       type: DataTypes.STRING,
       allowNull: false,
-      
     },
     photo_url: {
       type: DataTypes.STRING,
@@ -46,9 +49,24 @@ const User = sequelize.define(
     role: {
       type: DataTypes.ENUM("admin", "user", "driver"),
       allowNull: false,
-      defaultValue: "user"
-    }
+      defaultValue: "user",
+    },
+    location_id: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: {
+        model: Location,
+        key: "id",
+      },
+      onDelete: "SET NULL",
+    },
   },
+  {
+    timestamps: true,
+  }
 );
+
+Location.hasOne(User, { foreignKey: "location_id", onDelete: "SET NULL" });
+User.belongsTo(Location, { foreignKey: "location_id" });
 
 module.exports = User;
