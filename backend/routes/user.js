@@ -46,20 +46,17 @@ const generateTokens = (user) => {
 
 router.post("/register", upload.single("profileImage"), async (req, res) => {
   try {
-    console.log("JWT_SECRET:", process.env.JWT_SECRET);
-    const { name, email, password, phone_no, role } = req.body;
-    console.log(name);
-    console.log(email);
-    console.log(password);
-    console.log(phone_no);
+    const { name, email, password, phone_no, role, license_no, vehicle } =
+      req.body;
+    console.log(req.body);
+
     const existingUser = await User.findOne({ where: { email } });
-    console.log(existingUser);
-    if (existingUser) {
-      console.log("User already exists");
+    if (existingUser)
       return res.status(400).json({ error: "User already exists" });
-    }
+
     const hashedPassword = await bcrypt.hash(password, 10);
     const photo_url = req.file ? `/uploads/${req.file.filename}` : null;
+
     const newUser = await User.create({
       name,
       email,
@@ -68,6 +65,32 @@ router.post("/register", upload.single("profileImage"), async (req, res) => {
       role: role || "user",
       photo_url,
     });
+
+    if (role === "driver") {
+      if (!license_no || !vehicle) {
+        return res.status(400).json({
+          error: "Drivers must provide license number and vehicle details",
+        });
+      }
+
+      const newVehicle = await Vehicle.create({
+        vehicle_no: vehicle.vehicle_no,
+        type: vehicle.type,
+        capacity: vehicle.capacity,
+        model: vehicle.model,
+        image_url: vehicle.image_url || null,
+      });
+
+      await Driver.create({
+        user_id: newUser.id,
+        license_no,
+        vehicle_id: newVehicle.id,
+      });
+    } else if (role === "user") {
+      await Passenger.create({
+        user_id: newUser.id,
+      });
+    }
 
     const { accessToken, refreshToken } = generateTokens(newUser);
     res.cookie("refreshToken", refreshToken, {
