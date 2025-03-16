@@ -1,14 +1,37 @@
-"use client"
+"use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Car, Compass, Bike } from "lucide-react";
-import { useState } from "react";
 import { useRouter } from "next/navigation";
-const SelectRide = () => {
 
+import { io } from "socket.io-client";
+const socket = io("http://localhost:5000");
+
+// Send ride request
+const requestRide = (rideDetails) => {
+  socket.emit("requestRide", rideDetails);
+};
+
+// Listen for driver response
+socket.on("rideAccepted", ({ driverId }) => {
+  console.log(`Ride accepted by driver ${driverId}`);
+});
+
+socket.on("rideRejected", ({ driverId }) => {
+  console.log(`Driver ${driverId} rejected the ride`);
+});
+
+// Listen for real-time driver location updates
+socket.on("driverLocation", (location) => {
+  console.log("Driver is here:", location);
+});
+
+
+const SelectRide = () => {
   const router = useRouter();
-  
   const [selected, setSelected] = useState(0);
+  const [drivers, setDrivers] = useState([]);
+
   const loc_1 = [11.3149, 75.9377];
   const loc_2 = [11.4655, 75.8919];
 
@@ -36,13 +59,40 @@ const SelectRide = () => {
     { baseFare: 30, perKm: 12, perMin: 1.5, serviceFee: 8 },
     { baseFare: 20, perKm: 10, perMin: 1, serviceFee: 5 },
     { baseFare: 15, perKm: 8, perMin: 0.8, serviceFee: 3 },
-  ]
+  ];
+
   const rides = [
     { name: "Premium Cab", desc: "Luxury vehicles with top drivers", icon: <Car />, speed: 13.888 },
     { name: "Standard Cab", desc: "Comfortable rides up to 4", icon: <Car />, speed: 13.888 },
     { name: "Auto", desc: "Affordable rides up to 3 people", icon: <Compass />, speed: 8.333 },
     { name: "Bike", desc: "Quick rides for single passenger", icon: <Bike />, speed: 11.11 },
   ];
+
+  useEffect(() => {
+    socket.on("availableDrivers", (data) => {
+      setDrivers(data);
+    });
+
+    return () => {
+      socket.off("availableDrivers");
+    };
+  }, []);
+
+  const handleVehicleSelection = (index) => {
+    setSelected(index);
+    const vehicleType = rides[index].name;
+
+    const distanceKm = Math.ceil(Haversine(loc_1[0], loc_1[1], loc_2[0], loc_2[1]) / 1000);
+    const estimatedPrice =
+      pricing[index].baseFare + pricing[index].perKm * distanceKm + pricing[index].serviceFee;
+
+    // Send ride details to the backend
+    socket.emit("rideDetails", {
+      vehicleType,
+      estimatedPrice,
+      locations: { pickup: loc_1, dropoff: loc_2 },
+    });
+  };
 
   return (
     <div className="w-full max-w-2xl mx-auto mt-10 p-6 rounded-lg md:shadow-xl md:border md:border-neutral-200 bg-white sm:p-8">
@@ -55,9 +105,8 @@ const SelectRide = () => {
         {rides.map((ride, index) => (
           <div
             key={index}
-            onClick={() => setSelected(index)
-            }
-            className={` ${index === selected ? "border-black border-2" : "border-neutral-300"} cursor-pointer flex flex-col sm:flex-row items-center justify-between p-4 borde rounded-lg hover:shadow-md transition-shadow`}
+            onClick={() => handleVehicleSelection(index)}
+            className={` ${index === selected ? "border-black border-2" : "border-neutral-300"} cursor-pointer flex flex-col sm:flex-row items-center justify-between p-4 border rounded-lg hover:shadow-md transition-shadow`}
           >
             <div className="flex items-center gap-4">
               <div className="w-8 h-8 text-gray-600">{ride.icon}</div>
@@ -71,17 +120,28 @@ const SelectRide = () => {
             </p>
           </div>
         ))}
+
         <hr className="border-t border-neutral-700" />
+
         <div className="p-4 border border-neutral-300 rounded-lg hover:shadow-md transition-shadow">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
             <h3 className="text-lg font-medium">Estimated Price</h3>
-            <h2 className="font-medium text-xl text-gray-800">{`₹${pricing[selected].baseFare + pricing[selected].perKm * Math.ceil(Haversine(loc_1[0], loc_1[1], loc_2[0], loc_2[1]) / 1000) + pricing[selected].serviceFee}`}</h2>
+            <h2 className="font-medium text-xl text-gray-800">{`₹${
+              pricing[selected].baseFare +
+              pricing[selected].perKm * Math.ceil(Haversine(loc_1[0], loc_1[1], loc_2[0], loc_2[1]) / 1000) +
+              pricing[selected].serviceFee
+            }`}</h2>
           </div>
           <p className="text-base text-neutral-700 mt-1">Price may vary due to traffic and waiting time</p>
         </div>
+
         <div className="flex gap-x-3">
-            <button className="py-2 px-3 bg-black text-white rounded-md" onClick={() => router.push("/booking")}>Back</button>
-            <button className="py-2 px-3 border border-black rounded-md">Continue</button>
+          <button className="py-2 px-3 bg-black text-white rounded-md" onClick={() => router.push("/booking")}>
+            Back
+          </button>
+          <button className="py-2 px-3 border border-black rounded-md">
+            Continue
+          </button>
         </div>
       </div>
     </div>
