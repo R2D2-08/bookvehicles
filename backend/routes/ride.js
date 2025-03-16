@@ -5,21 +5,15 @@ const Driver = require("../models/Drivers");
 const Vehicle = require("../models/Vehicles");
 const Passenger = require("../models/Passengers");
 const router = express.Router();
-
 router.post("/request", authenticate, async (req, res) => {
   try {
-    const {
-      start_location_id,
-      end_location_id,
-      fare,
-      distance,
-      vehicle_requested,
-    } = req.body;
+    const { start_location, end_location, fare, distance, vehicle_requested } =
+      req.body;
     const passenger_id = req.user.id;
 
     if (
-      !start_location_id ||
-      !end_location_id ||
+      !start_location ||
+      !end_location ||
       !fare ||
       !distance ||
       !vehicle_requested
@@ -27,10 +21,13 @@ router.post("/request", authenticate, async (req, res) => {
       return res.status(422).json({ error: "All fields are required." });
     }
 
+    const startLocation = await Location.create(start_location);
+    const endLocation = await Location.create(end_location);
+
     const ride = await Ride.create({
       passenger_id,
-      start_location_id,
-      end_location_id,
+      start_location_id: startLocation.id,
+      end_location_id: endLocation.id,
       fare,
       distance,
       status: "pending",
