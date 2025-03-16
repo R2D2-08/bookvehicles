@@ -4,9 +4,8 @@ const cors = require("cors");
 const helmet = require("helmet");
 const morgan = require("morgan");
 const { sequelize, syncDatabase } = require("./models"); // Import from index.js
+const routes = require("./routes"); // Import unified routes
 
-// Import routes
-const userRouter = require("./routes/User");
 const app = express();
 const PORT = process.env.PORT || 5000;
 
@@ -17,7 +16,8 @@ app.use(helmet());
 app.use(morgan("dev"));
 
 // API Routes
-app.use("/users", userRouter);
+app.use("/api", routes);
+
 app.get("/", (req, res) => {
   res.send("Taxi Booking API is running...");
 });
@@ -25,7 +25,7 @@ app.get("/", (req, res) => {
 // Start server
 const startServer = async () => {
   try {
-    await syncDatabase(); // Sync all models from index.js
+    await syncDatabase(); // Sync all models
     console.log("All tables synced successfully");
 
     const server = app.listen(PORT, () => {

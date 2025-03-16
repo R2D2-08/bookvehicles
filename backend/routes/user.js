@@ -2,6 +2,9 @@ const express = require("express");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const User = require("../models/Users");
+const Passenger = require("../models/Passengers");
+const Driver = require("../models/Drivers");
+const Vehicle = require("../models/Vehicles");
 const multer = require("multer");
 const router = express.Router();
 const path = require("path");
@@ -86,7 +89,7 @@ router.post("/register", upload.single("profileImage"), async (req, res) => {
         license_no,
         vehicle_id: newVehicle.id,
       });
-    } else if (role === "user") {
+    } else {
       await Passenger.create({
         user_id: newUser.id,
       });

@@ -15,7 +15,7 @@ const Ride = sequelize.define(
     },
     driver_id: {
       type: DataTypes.INTEGER,
-      allowNull: false,
+      allowNull: true,
       references: {
         model: "Drivers",
         key: "user_id",
@@ -73,6 +73,10 @@ const Ride = sequelize.define(
     end_time: {
       type: DataTypes.DATE,
       allowNull: true,
+    },
+    vehicle_requested: {
+      type: DataTypes.ENUM("premium", "standard", "auto", "bike"),
+      allowNull: false,
     },
   },
   {
