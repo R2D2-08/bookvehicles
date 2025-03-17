@@ -35,6 +35,7 @@ const Booking = () => {
   const [dropLatLong, setDropLatLong] = useState(null);
   const [customIcon, setCustomIcon] = useState(null);
 
+  // Load custom icon
   useEffect(() => {
     if (typeof window !== "undefined") {
       import("leaflet").then((L) => {
@@ -54,6 +55,7 @@ const Booking = () => {
     }
   }, []);
 
+  // Fetch coordinates for pickup and drop locations
   useEffect(() => {
     const fetchCoordinates = async (location, setLatLong) => {
       if (!location) return;
@@ -74,6 +76,21 @@ const Booking = () => {
     fetchCoordinates(pickLocation, setPickLatLong);
     fetchCoordinates(dropLocation, setDropLatLong);
   }, [pickLocation, dropLocation]);
+
+  // Save to localStorage only after coordinates are updated
+  useEffect(() => {
+    if (pickLatLong) {
+      localStorage.setItem("pickLocation", pickLocation);
+      localStorage.setItem("pickLocCoordinates", JSON.stringify(pickLatLong));
+    }
+  }, [pickLatLong, pickLocation]);
+
+  useEffect(() => {
+    if (dropLatLong) {
+      localStorage.setItem("dropLocation", dropLocation);
+      localStorage.setItem("dropLocCoordinates", JSON.stringify(dropLatLong));
+    }
+  }, [dropLatLong, dropLocation]);
 
   const SetView = ({ center }) => {
     const map = useMap();
@@ -116,7 +133,6 @@ const Booking = () => {
           </div>
         </div>
 
-
         <button onClick={() => router.push("/select")} className="cursor-point w-full bg-black text-white py-3 rounded-lg flex justify-center items-center gap-2 text-lg font-medium">
           Find a Ride <ArrowRight size={20} />
         </button>
@@ -143,7 +159,6 @@ const Booking = () => {
             </>
           )}
 
-          {/* Drop Marker */}
           {dropLatLong && customIcon && (
             <>
               <SetView center={dropLatLong} />

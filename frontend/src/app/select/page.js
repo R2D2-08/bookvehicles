@@ -1,19 +1,27 @@
-"use client"
+"use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Car, Compass, Bike } from "lucide-react";
-import { useState } from "react";
 import { useRouter } from "next/navigation";
-const SelectRide = () => {
 
+const SelectRide = () => {
   const router = useRouter();
-  
   const [selected, setSelected] = useState(0);
-  const loc_1 = [11.3149, 75.9377];
-  const loc_2 = [11.4655, 75.8919];
+  const [pickCoordinates, setPickCoordinates] = useState(null);
+  const [dropCoordinates, setDropCoordinates] = useState(null);
+
+
+  useEffect(() => {
+    const pickLoc = JSON.parse(localStorage.getItem("pickLocCoordinates"));
+    const dropLoc = JSON.parse(localStorage.getItem("dropLocCoordinates"));
+    if (pickLoc && dropLoc) {
+      setPickCoordinates(pickLoc);
+      setDropCoordinates(dropLoc);
+    }
+  }, []);
 
   const Haversine = (lat1, lon1, lat2, lon2) => {
-    const R = 6371e3;
+    const R = 6371e3; 
     const phi_1 = (lat1 * Math.PI) / 180;
     const phi_2 = (lat2 * Math.PI) / 180;
     const diff_phi = ((lat2 - lat1) * Math.PI) / 180;
@@ -28,7 +36,7 @@ const SelectRide = () => {
 
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
-    return Math.ceil(R * c);
+    return Math.ceil(R * c); 
   };
 
   const pricing = [
@@ -36,13 +44,30 @@ const SelectRide = () => {
     { baseFare: 30, perKm: 12, perMin: 1.5, serviceFee: 8 },
     { baseFare: 20, perKm: 10, perMin: 1, serviceFee: 5 },
     { baseFare: 15, perKm: 8, perMin: 0.8, serviceFee: 3 },
-  ]
+  ];
+
   const rides = [
     { name: "Premium Cab", desc: "Luxury vehicles with top drivers", icon: <Car />, speed: 13.888 },
     { name: "Standard Cab", desc: "Comfortable rides up to 4", icon: <Car />, speed: 13.888 },
     { name: "Auto", desc: "Affordable rides up to 3 people", icon: <Compass />, speed: 8.333 },
     { name: "Bike", desc: "Quick rides for single passenger", icon: <Bike />, speed: 11.11 },
   ];
+
+  const distance = pickCoordinates && dropCoordinates
+    ? Haversine(pickCoordinates[0], pickCoordinates[1], dropCoordinates[0], dropCoordinates[1])
+    : null;
+
+  const estimatedTime = (rideSpeed) => {
+    if (!distance || !rideSpeed) return null;
+    return Math.ceil(distance / (rideSpeed * 60)); 
+  };
+
+  const estimatedPrice = (selected) => {
+    if (!distance) return null;
+    const { baseFare, perKm, serviceFee } = pricing[selected];
+    const distanceKm = distance / 1000; 
+    return baseFare + perKm * Math.ceil(distanceKm) + serviceFee;
+  };
 
   return (
     <div className="w-full max-w-2xl mx-auto mt-10 p-6 rounded-lg md:shadow-xl md:border md:border-neutral-200 bg-white sm:p-8">
@@ -55,9 +80,8 @@ const SelectRide = () => {
         {rides.map((ride, index) => (
           <div
             key={index}
-            onClick={() => setSelected(index)
-            }
-            className={` ${index === selected ? "border-black border-2" : "border-neutral-300"} cursor-pointer flex flex-col sm:flex-row items-center justify-between p-4 borde rounded-lg hover:shadow-md transition-shadow`}
+            onClick={() => setSelected(index)}
+            className={`${index === selected ? "border-black border-2" : "border-neutral-300"} cursor-pointer flex flex-col sm:flex-row items-center justify-between p-4 rounded-lg hover:shadow-md transition-shadow`}
           >
             <div className="flex items-center gap-4">
               <div className="w-8 h-8 text-gray-600">{ride.icon}</div>
@@ -66,22 +90,30 @@ const SelectRide = () => {
                 <p className="text-neutral-700 text-sm">{ride.desc}</p>
               </div>
             </div>
-            <p className="text-sm text-gray-600 mt-2 sm:mt-0">
-              {Math.ceil(Haversine(loc_1[0], loc_1[1], loc_2[0], loc_2[1]) / (ride.speed * 60))} min
-            </p>
+            {distance && (
+              <p className="text-sm text-gray-600 mt-2 sm:mt-0">
+                {estimatedTime(ride.speed)} min
+              </p>
+            )}
           </div>
         ))}
         <hr className="border-t border-neutral-700" />
         <div className="p-4 border border-neutral-300 rounded-lg hover:shadow-md transition-shadow">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
             <h3 className="text-lg font-medium">Estimated Price</h3>
-            <h2 className="font-medium text-xl text-gray-800">{`₹${pricing[selected].baseFare + pricing[selected].perKm * Math.ceil(Haversine(loc_1[0], loc_1[1], loc_2[0], loc_2[1]) / 1000) + pricing[selected].serviceFee}`}</h2>
+            {distance && (
+              <h2 className="font-medium text-xl text-gray-800">
+                ₹{estimatedPrice(selected)}
+              </h2>
+            )}
           </div>
           <p className="text-base text-neutral-700 mt-1">Price may vary due to traffic and waiting time</p>
         </div>
         <div className="flex gap-x-3">
-            <button className="py-2 px-3 bg-black text-white rounded-md" onClick={() => router.push("/booking")}>Back</button>
-            <button className="py-2 px-3 border border-black rounded-md">Continue</button>
+          <button className="py-2 px-3 bg-black text-white rounded-md" onClick={() => router.push("/booking")}>
+            Back
+          </button>
+          <button className="py-2 px-3 border border-black rounded-md">Continue</button>
         </div>
       </div>
     </div>

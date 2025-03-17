@@ -41,7 +41,7 @@ function Signup() {
         formData.append("photo", user.photo_url);
       }
 
-      const response = await fetch("http://localhost:5000/users/register", {
+      const response = await fetch("http://localhost:5000/api/users/register", {
         method: "POST",
         body: formData,
         credentials: "include"
@@ -53,8 +53,8 @@ function Signup() {
       }
 
       const data = await response.json();
-      toast.success("Login Successful");
-      router.push("/booking");
+      toast.success("Registration Successful");
+      router.push("/login");
     } catch (error) {
       toast.error("Internal Server Issue");
     }

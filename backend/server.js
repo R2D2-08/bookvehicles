@@ -9,13 +9,11 @@ const routes = require("./routes"); // Import unified routes
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Middleware
 app.use(express.json());
 app.use(cors({ origin: "http://localhost:3000", credentials: true }));
 app.use(helmet());
 app.use(morgan("dev"));
 
-// API Routes
 app.use("/api", routes);
 
 app.get("/", (req, res) => {
@@ -25,14 +23,13 @@ app.get("/", (req, res) => {
 // Start server
 const startServer = async () => {
   try {
-    await syncDatabase(); // Sync all models
+    await syncDatabase();
     console.log("All tables synced successfully");
 
     const server = app.listen(PORT, () => {
       console.log(`Server running on PORT ${PORT}`);
     });
 
-    // Graceful Shutdown Handling
     process.on("SIGINT", async () => {
       console.log("Shutting down server...");
       await sequelize.close();

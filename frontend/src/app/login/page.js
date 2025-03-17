@@ -3,11 +3,12 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import { toast } from "sonner";
 
 function Login() {
   const router = useRouter();
   const [user, setUser] = useState({
-    name: "",
+    email: "",
     password: "",
   });
 
@@ -22,28 +23,31 @@ function Login() {
     e.preventDefault();
 
     try {
-      const response = await fetch("<api>", {
+      const response = await fetch("http://localhost:5000/api/users/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Accept: "application/json",
+          
         },
+        credentials: "include",
         body: JSON.stringify({
-          username: user.name,
+          email: user.email,
           password: user.password,
         }),
       });
 
       if (!response.ok) {
-        throw new Error("Failed to authenticate");
+        toast.error("Login Failed");
+        return;
       }
 
       const data = await response.json();
-      localStorage.setItem("AccessToken", data.access);
-      localStorage.setItem("RefreshToken", data.refresh);
+      toast.success("Login Successful");
 
-      router.push("/");
+      router.push("/booking");
     } catch (error) {
-      console.error("Error during login:", error);
+      toast.error("Internal Server Error");
     }
   };
 
@@ -58,14 +62,14 @@ function Login() {
           <form onSubmit={handleSubmit}>
             <div className="py-4">
               <label htmlFor="name" className="mb-2 text-md">
-                Name
+                Email
               </label>
               <input
-                value={user.name}
+                value={user.email}
                 onChange={handleChange}
-                type="text"
-                name="name"
-                id="name"
+                type="email"
+                name="email"
+                id="email"
                 className="w-full p-2 border border-gray-300 rounded-md"
                 placeholder="Enter your name"
               />

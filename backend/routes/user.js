@@ -9,6 +9,7 @@ const multer = require("multer");
 const router = express.Router();
 const path = require("path");
 const fs = require("fs");
+const { serialize } = require("v8");
 const uploadDir = path.join(__dirname, "../uploads");
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
@@ -176,10 +177,69 @@ router.get("/", async (req, res) => {
 });
 
 router.post("/logout", (req, res) => {
-  const { accessToken, refreshToken } = req.cookies;
   res.clearCookie("refreshToken");
   res.clearCookie("accessToken");
   res.status(200).json({ message: "Loggged Out" });
 });
+
+router.get("/check-auth", async (req, res) => {
+  const accessToken = req.cookies.accessToken;
+
+  if (!accessToken) {
+    return res.status(401).json({
+      message: "No access token",
+    });
+  }
+  try {
+    const decoded = jwt.verify(accessToken, process.env.JWT_SECRET);
+
+    return res.status(200).json({
+      isAuthenticated: true,
+    });
+  } catch (error) {
+    if (error.name === "TokenExpiredError") {
+      try {
+        const newAccessToken = await refreshAccessToken(
+          req.cookies.refreshToken
+        );
+
+        res.setHeader(
+          "Set-Cookie",
+          serialize("accessToken", newAccessToken, cookieOptions)
+        );
+
+        res.status(200).json({
+          isAuthenticated: true,
+        });
+      } catch (err) {
+        return res
+          .status(401)
+          .json({ message: "Session expired. Please log in again." });
+      }
+    }
+  }
+});
+
+const refreshAccessToken = async (refreshToken) => {
+  if (!refreshToken) {
+    throw new Error("No refresh token found");
+  }
+  const decodedRefreshToken = jwt.verify(
+    refreshToken,
+    process.env.REFRESH_SECRET
+  );
+
+  const newAccessToken = jwt.sign(
+    {
+      userId: decodedRefreshToken.userId,
+    },
+    process.env.JWT_SECRET,
+    {
+      expiresIn: "15m",
+    }
+  );
+
+  return newAccessToken;
+};
 
 module.exports = router;
