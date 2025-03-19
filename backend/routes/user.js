@@ -139,7 +139,7 @@ router.post("/login", async (req, res) => {
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
-    res.status(200).json({ message: "Login successful" });
+    res.status(200).json({ message: "Login successful", email, name: user.name });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -188,9 +188,20 @@ router.get("/check-auth", async (req, res) => {
   const accessToken = req.cookies.accessToken;
 
   if (!accessToken) {
-    return res.status(401).json({
-      message: "No access token",
-    });
+    const newAccessToken = await refreshAccessToken(req.cookies.refreshToken);
+    try {
+      res.cookie("accessToken", newAccessToken, {
+        ...cookieOptions,
+        maxAge: 15 * 60 * 1000,
+      });
+      return res.status(200).json({
+        isAuthenticated: true
+      });
+    } catch(err) {
+      return res.status(401).json({
+        message: "Session expired. Please log in again."
+      })
+    }
   }
   try {
     const decoded = jwt.verify(accessToken, process.env.JWT_SECRET);
@@ -206,12 +217,11 @@ router.get("/check-auth", async (req, res) => {
           req.cookies.refreshToken
         );
 
-        res.setHeader(
-          "Set-Cookie",
-          serialize("accessToken", newAccessToken, cookieOptions)
-        );
-
-        res.status(200).json({
+        res.cookie("accessToken", newAccessToken, {
+          ...cookieOptions, 
+          maxAge: 15 * 60 * 1000
+        });
+        return res.status(200).json({
           isAuthenticated: true,
         });
       } catch (err) {
@@ -220,7 +230,10 @@ router.get("/check-auth", async (req, res) => {
           .json({ message: "Session expired. Please log in again." });
       }
     }
-  }
+    return res.status(401).json({
+      message: "Authentication failed"
+    });
+  }  
 });
 
 const refreshAccessToken = async (refreshToken) => {
