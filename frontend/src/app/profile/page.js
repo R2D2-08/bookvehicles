@@ -1,38 +1,14 @@
-import React, { use } from "react";
+import React from "react";
 import Image from "next/image";
-import {
-  User,
-  Mail,
-  Info,
-  Star,
-  MapPin,
-  Award,
-  Briefcase,
-  CheckCircle,
-} from "lucide-react";
+import { User, Mail, Info, Star, MapPin, Award, Briefcase, CheckCircle } from "lucide-react";
 
 const UserProfile = () => {
-  const [user, setUser] = useState({});
-  useEffect(() => {
-    try {
-      fetch("http://localhost:5000/api/users/profile")
-        .then((res) => res.json())
-        .then((data) => setUser(data.user));
-    } catch (error) {
-      console.log("Failed to fetch user profile");
-    }
-  });
   return (
     <section className="min-h-screen w-full flex flex-col md:flex-row items-center bg-gray-100 p-6">
       <div className="md:w-1/3 w-full flex justify-center p-4">
         <div className="p-6 bg-white shadow-xl rounded-lg text-center w-full max-w-sm">
           <div className="relative w-32 h-32 md:w-40 md:h-40 rounded-full overflow-hidden mx-auto border-4 border-gray-300">
-            <Image
-              src="/images/profile_photo.jfif"
-              alt="User Profile"
-              layout="fill"
-              objectFit="cover"
-            />
+            <Image src="/images/profile_photo.jfif" alt="User Profile" layout="fill" objectFit="cover" />
           </div>
           <h1 className="text-2xl font-semibold mt-4 flex justify-center items-center gap-2">
             <User size={20} /> John Doe
