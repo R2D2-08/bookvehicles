@@ -1,17 +1,58 @@
-import React from "react";
+"use client";
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
-import { User, Mail, Info, Star, MapPin, Award, Briefcase, CheckCircle } from "lucide-react";
+import {
+  User,
+  Mail,
+  Info,
+  Star,
+  MapPin,
+  Award,
+  Briefcase,
+  CheckCircle,
+} from "lucide-react";
 
 const UserProfile = () => {
+  const [user, setUser] = useState({});
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const response = await fetch(
+          "http://localhost:5000/api/users/profile",
+          {
+            method: "GET",
+            credentials: "include",
+          }
+        );
+        if (!response.ok) {
+          throw new Error("Failed to fetch user");
+        }
+        const data = await response.json();
+        console.log(data);
+        setUser(data);
+        setLoading(false);
+      } catch (error) {
+        console.error(error);
+        setLoading(false);
+      }
+    };
+    fetchUser();
+  }, []);
   return (
     <section className="min-h-screen w-full flex flex-col md:flex-row items-center bg-gray-100 p-6">
       <div className="md:w-1/3 w-full flex justify-center p-4">
         <div className="p-6 bg-white shadow-xl rounded-lg text-center w-full max-w-sm">
           <div className="relative w-32 h-32 md:w-40 md:h-40 rounded-full overflow-hidden mx-auto border-4 border-gray-300">
-            <Image src="/images/profile_photo.jfif" alt="User Profile" layout="fill" objectFit="cover" />
+            <Image
+              src="/images/profile_photo.jfif"
+              alt="User Profile"
+              layout="fill"
+              objectFit="cover"
+            />
           </div>
           <h1 className="text-2xl font-semibold mt-4 flex justify-center items-center gap-2">
-            <User size={20} /> John Doe
+            <User size={20} /> {"Name"}
           </h1>
           <p className="text-gray-700 flex justify-center items-center gap-2 mt-2 text-sm">
             <Mail size={18} /> johndoe@example.com
