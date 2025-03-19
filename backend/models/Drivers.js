@@ -18,7 +18,6 @@ const Driver = sequelize.define(
     license_no: {
       type: DataTypes.STRING,
       allowNull: false,
-      unique: true,
     },
     vehicle_id: {
       type: DataTypes.INTEGER,

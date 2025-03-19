@@ -12,7 +12,6 @@ const Vehicle = sequelize.define(
     vehicle_no: {
       type: DataTypes.STRING,
       allowNull: false,
-      unique: true,
     },
     type: {
       type: DataTypes.ENUM("premium", "standard", "auto", "bike"),
