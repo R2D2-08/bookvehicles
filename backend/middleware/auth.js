@@ -2,7 +2,7 @@ const jwt = require("jsonwebtoken");
 require("dotenv").config();
 const express = require("express");
 const authenticate = (req, res, next) => {
-  const token = req.header("Authorization");
+  const token = req.cookies.accessToken;
   if (!token) {
     return res.status(401).json({
       error: "Access denied. No token",
