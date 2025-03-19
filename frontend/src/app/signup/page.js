@@ -44,7 +44,7 @@ function Signup() {
       const response = await fetch("http://localhost:5000/api/users/register", {
         method: "POST",
         body: formData,
-        credentials: "include"
+        credentials: "include",
       });
 
       if (!response.ok) {
@@ -62,13 +62,13 @@ function Signup() {
 
   return (
     <div className="flex items-center justify-center py-10 bg-white">
-      <div className="relative flex flex-col m-6 space-y-8 bg-white shadow-2xl rounded-2xl md:flex-row md:space-y-0">
-        <div className="flex flex-col justify-center p-8 md:p-14">
-          <h1 className="mb-3 text-4xl font-bold">Register your account</h1>
-          <p className="font-light text-gray-400 mb-8">Enter your details</p>
+      <div className="relative flex flex-col m-6 space-y-4 bg-white shadow-2xl rounded-2xl md:flex-row md:space-y-0">
+        <div className="flex flex-col justify-center p-6 md:p-10">
+          <h1 className="mb-1 text-3xl font-bold">Register your account</h1>
+          <p className="font-light text-gray-400 mb-2">Enter your details</p>
           <form onSubmit={handleSubmit}>
-            <div className="py-4">
-              <label htmlFor="name" className="mb-2 text-md">
+            <div className="py-1">
+              <label htmlFor="name" className="mb-1 text-md">
                 Name
               </label>
               <input
@@ -140,7 +140,7 @@ function Signup() {
             </div>
             <button
               type="submit"
-              className="w-full bg-black text-white p-2 rounded-lg mb-6 hover:bg-white hover:text-black border hover:border-gray-300 transition"
+              className="w-full bg-black text-white p-2 rounded-lg mt-3 hover:bg-white hover:text-black border hover:border-gray-300 transition"
             >
               Sign Up
             </button>
@@ -163,7 +163,7 @@ function Signup() {
         <div className="relative hidden md:block">
           <img
             src="/images/hero_image.jpg"
-            alt="Login Illustration"
+            alt="Signup Illustration"
             className="w-[400px] h-full rounded-r-2xl object-cover"
           />
         </div>
