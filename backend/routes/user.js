@@ -11,6 +11,7 @@ const path = require("path");
 const fs = require("fs");
 const { serialize } = require("v8");
 const { doesNotMatch } = require("assert");
+const { authenticate } = require("../middleware/auth");
 const uploadDir = path.join(__dirname, "../uploads");
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
@@ -243,5 +244,25 @@ const refreshAccessToken = async (refreshToken) => {
 
   return newAccessToken;
 };
+
+router.get("/profile", authenticate, async (req, res) => {
+  try {
+    const user = await User.findOne({ where: { id: req.user.id } });
+    if (req.role === "driver") {
+      const driver = await Driver.findOne({ where: { user_id: req.user.id } });
+      const vehicle = await Vehicle.findOne({
+        where: { id: driver.vehicle_id },
+      });
+      return res.status(200).json({ user, driver, vehicle });
+    } else {
+      const passenger = await Passenger.findOne({
+        where: { user_id: req.user.id },
+      });
+      return res.status(200).json({ user, passenger });
+    }
+  } catch (err) {
+    res.status(500).json({ error: err });
+  }
+});
 
 module.exports = router;
