@@ -10,6 +10,7 @@ const router = express.Router();
 const path = require("path");
 const fs = require("fs");
 const { serialize } = require("v8");
+const { doesNotMatch } = require("assert");
 const uploadDir = path.join(__dirname, "../uploads");
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
@@ -192,6 +193,7 @@ router.get("/check-auth", async (req, res) => {
   }
   try {
     const decoded = jwt.verify(accessToken, process.env.JWT_SECRET);
+    console.log(decoded);
 
     return res.status(200).json({
       isAuthenticated: true,
