@@ -52,7 +52,7 @@ const UserProfile = () => {
             />
           </div>
           <h1 className="text-2xl font-semibold mt-4 flex justify-center items-center gap-2">
-            <User size={20} /> {"Name"}
+            <User size={20} /> {user.user.name}
           </h1>
           <p className="text-gray-700 flex justify-center items-center gap-2 mt-2 text-sm">
             <Mail size={18} /> johndoe@example.com
