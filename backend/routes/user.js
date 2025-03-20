@@ -202,6 +202,7 @@ router.get("/check-auth", async (req, res) => {
         ...cookieOptions,
         maxAge: 15 * 60 * 1000,
       });
+      console.log("New Access Token:", newAccessToken);
       return res.status(200).json({ isAuthenticated: true });
     } catch (err) {
       return res
@@ -249,19 +250,25 @@ const refreshAccessToken = async (refreshToken) => {
       process.env.REFRESH_SECRET
     );
 
-    if (!decodedRefreshToken || !decodedRefreshToken.userId) {
+    console.log("Decoded Refresh Token:", decodedRefreshToken);
+
+    const { id, role, name } = decodedRefreshToken;
+
+    if (!id || !role || !name) {
+      console.error("Missing fields in refresh token");
       return null;
     }
 
-    return jwt.sign(
-      {
-        userId: decodedRefreshToken.userId,
-        role: decodedRefreshToken.role,
-        name: decodedRefreshToken.name,
-      },
-      process.env.JWT_SECRET,
-      { expiresIn: "15m" }
-    );
+    const payload = { id: id, role, name };
+    console.log("Payload for new access token:", payload);
+
+    const newAccessToken = jwt.sign(payload, process.env.JWT_SECRET, {
+      expiresIn: "15m",
+    });
+
+    console.log("New Access Token:", newAccessToken);
+
+    return newAccessToken;
   } catch (error) {
     console.error("Error refreshing token:", error.message);
     return null;
@@ -318,6 +325,7 @@ router.get("/profile", authenticate, async (req, res) => {
       return res.status(200).json({ user, passenger });
     }
   } catch (err) {
+    console.error(err);
     res.status(500).json({ error: err });
   }
 });
