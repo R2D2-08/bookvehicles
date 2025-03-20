@@ -5,7 +5,6 @@ import { Car, Compass, Bike } from "lucide-react";
 import { useRouter } from "next/navigation";
 import io from "socket.io-client";
 import { toast } from "sonner";
-import { Princess_Sofia } from "next/font/google";
 
 const socket = io("http://localhost:5000", {
   reconnection: true,
@@ -141,8 +140,10 @@ const SelectRide = () => {
       pickCoordinates,
       dropCoordinates,
       price: estimatedPrice(selected),
-      booking_date: Date.now()
+      booking_date: Date.now(),
     };
+
+    console.log("Booking request sent!");
 
     socket.emit("book_request", bookingData);
   };

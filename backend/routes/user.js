@@ -254,7 +254,11 @@ const refreshAccessToken = async (refreshToken) => {
     }
 
     return jwt.sign(
-      { userId: decodedRefreshToken.userId },
+      {
+        userId: decodedRefreshToken.userId,
+        role: decodedRefreshToken.role,
+        name: decodedRefreshToken.name,
+      },
       process.env.JWT_SECRET,
       { expiresIn: "15m" }
     );
