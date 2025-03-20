@@ -55,7 +55,7 @@ const UserProfile = () => {
             <User size={20} /> {user.user.name}
           </h1>
           <p className="text-gray-700 flex justify-center items-center gap-2 mt-2 text-sm">
-            <Mail size={18} /> johndoe@example.com
+            <Mail size={18} /> {user.user.email}
           </p>
           <p className="mt-2 text-gray-600 flex justify-center items-center gap-2 text-sm">
             <Info size={18} /> India
@@ -71,7 +71,7 @@ const UserProfile = () => {
         <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
           <div className="bg-gray-50 p-4 rounded-lg shadow-md flex flex-col items-center">
             <Star size={30} />
-            <h3 className="text-xl font-semibold mt-2">4.8</h3>
+            <h3 className="text-xl font-semibold mt-2">{user.user.rating}</h3>
             <p className="text-sm">Average Review</p>
           </div>
           <div className="bg-gray-50 p-4 rounded-lg shadow-md flex flex-col items-center">
@@ -81,7 +81,9 @@ const UserProfile = () => {
           </div>
           <div className="bg-gray-50 p-4 rounded-lg shadow-md flex flex-col items-center">
             <Award size={30} />
-            <h3 className="text-xl font-semibold mt-2">2500</h3>
+            <h3 className="text-xl font-semibold mt-2">
+              {user.passenger.points}
+            </h3>
             <p className="text-sm">Total Points Earned</p>
           </div>
           <div className="bg-gray-50 p-4 rounded-lg shadow-md flex flex-col items-center">
