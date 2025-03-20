@@ -12,6 +12,7 @@ const fs = require("fs");
 const { serialize } = require("v8");
 const { doesNotMatch } = require("assert");
 const { authenticate } = require("../middleware/auth");
+const { decode } = require("punycode");
 const uploadDir = path.join(__dirname, "../uploads");
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
@@ -36,13 +37,13 @@ const cookieOptions = {
 
 const generateTokens = (user) => {
   const accessToken = jwt.sign(
-    { id: user.id, role: user.role },
+    { id: user.id, role: user.role, name: user.name },
     process.env.JWT_SECRET,
     { expiresIn: "15m" }
   );
 
   const refreshToken = jwt.sign(
-    { id: user.id, role: user.role },
+    { id: user.id, role: user.role, name: user.name },
     process.env.REFRESH_SECRET,
     { expiresIn: "7d" }
   );
@@ -160,7 +161,7 @@ router.post("/refresh", (req, res) => {
       return res.status(403).json({ error: "Invalid Token" });
     }
     const newAccessToken = jwt.sign(
-      { id: user.id, role: user.role },
+      { id: user.id, role: user.role, name: user.name },
       process.env.JWT_SECRET,
       {
         expiresIn: "15m",
@@ -262,6 +263,39 @@ const refreshAccessToken = async (refreshToken) => {
     return null;
   }
 };
+
+router.get("/details", async (req, res) => {
+  try {
+    const accessToken = req.cookies.accessToken;
+    if (!accessToken) {
+      const refreshToken = req.cookies.refreshToken;
+      if (!refreshToken) {
+        return res.status(401).json({
+          error: "No refresh token",
+        });
+      }
+
+      const newAccessToken = refreshAccessToken(refreshToken);
+      res.cookie("accessToken", newAccessToken, {
+        ...cookieOptions,
+        maxAge: 15 * 60 * 1000,
+      });
+
+      return res.status(200).json({
+        isAuthenticated: true,
+      });
+    }
+    const decoded = jwt.verify(accessToken, process.env.JWT_SECRET);
+    res.status(200).json({
+      name: decoded.name,
+      role: decoded.role,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      error: "Internal Server Error",
+    });
+  }
+});
 
 router.get("/profile", authenticate, async (req, res) => {
   try {
