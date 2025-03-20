@@ -4,17 +4,24 @@ import Image from "next/image";
 import {
   User,
   Mail,
-  Info,
-  Star,
   MapPin,
+  Star,
   Award,
-  Briefcase,
   CheckCircle,
+  Phone,
+  Briefcase,
 } from "lucide-react";
 
 const UserProfile = () => {
-  const [user, setUser] = useState({});
+  const [user, setUser] = useState({
+    user: {
+      name: "",
+      email: "",
+      phone_no: "",
+    },
+  });
   const [loading, setLoading] = useState(true);
+
   useEffect(() => {
     const fetchUser = async () => {
       try {
@@ -29,7 +36,6 @@ const UserProfile = () => {
           throw new Error("Failed to fetch user");
         }
         const data = await response.json();
-        console.log(data);
         setUser(data);
         setLoading(false);
       } catch (error) {
@@ -39,57 +45,78 @@ const UserProfile = () => {
     };
     fetchUser();
   }, []);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-blue-500 to-purple-600">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-white"></div>
+      </div>
+    );
+  }
+
   return (
-    <section className="min-h-screen w-full flex flex-col md:flex-row items-center bg-gray-100 p-6">
-      <div className="md:w-1/3 w-full flex justify-center p-4">
-        <div className="p-6 bg-white shadow-xl rounded-lg text-center w-full max-w-sm">
-          <div className="relative w-32 h-32 md:w-40 md:h-40 rounded-full overflow-hidden mx-auto border-4 border-gray-300">
-            <Image
-              src="/images/profile_photo.jfif"
-              alt="User Profile"
-              layout="fill"
-              objectFit="cover"
-            />
+    <section className="min-h-screen bg-gradient-to-r from-blue-500 to-purple-600 text-white">
+      <div className="container mx-auto px-6 py-16">
+        <div className="flex flex-col md:flex-row items-center justify-between">
+          <div className="flex flex-col items-center md:items-start space-y-6">
+            <div className="relative w-48 h-48 rounded-full overflow-hidden border-4 border-white shadow-2xl">
+              <Image
+                src="/images/profile_photo.jfif"
+                alt="User Profile"
+                layout="fill"
+                objectFit="cover"
+              />
+            </div>
+            <h1 className="text-4xl font-bold flex items-center gap-3">
+              <User size={32} /> {user.user?.name ?? "User"}
+            </h1>
+            <p className="text-lg flex items-center gap-3">
+              <Mail size={20} /> {user.user?.email ?? "Email"}
+            </p>
+            <p className="text-lg flex items-center gap-3">
+              <Phone size={20} /> {user.user?.phone_no ?? "Phone Number"}
+            </p>
+            <p className="text-lg flex items-center gap-3">
+              <Briefcase size={20} /> Gold Member
+            </p>
           </div>
-          <h1 className="text-2xl font-semibold mt-4 flex justify-center items-center gap-2">
-            <User size={20} /> {user.user.name}
-          </h1>
-          <p className="text-gray-700 flex justify-center items-center gap-2 mt-2 text-sm">
-            <Mail size={18} /> {user.user.email}
-          </p>
-          <p className="mt-2 text-gray-600 flex justify-center items-center gap-2 text-sm">
-            <Info size={18} /> India
-          </p>
-          <p className="mt-4 text-gray-600 flex justify-center items-center gap-2 text-sm">
-            <Briefcase size={18} /> Gold Member
-          </p>
         </div>
       </div>
 
-      <div className="md:w-2/3 w-full bg-white shadow-lg rounded-lg p-6">
-        <h2 className="text-2xl font-semibold mb-4">User Statistics</h2>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
-          <div className="bg-gray-50 p-4 rounded-lg shadow-md flex flex-col items-center">
-            <Star size={30} />
-            <h3 className="text-xl font-semibold mt-2">{user.user.rating}</h3>
-            <p className="text-sm">Average Review</p>
-          </div>
-          <div className="bg-gray-50 p-4 rounded-lg shadow-md flex flex-col items-center">
-            <MapPin size={30} />
-            <h3 className="text-xl font-semibold mt-2">12,500 km</h3>
-            <p className="text-sm">Total Distance Traveled</p>
-          </div>
-          <div className="bg-gray-50 p-4 rounded-lg shadow-md flex flex-col items-center">
-            <Award size={30} />
-            <h3 className="text-xl font-semibold mt-2">
-              {user.passenger.points}
-            </h3>
-            <p className="text-sm">Total Points Earned</p>
-          </div>
-          <div className="bg-gray-50 p-4 rounded-lg shadow-md flex flex-col items-center">
-            <CheckCircle size={30} />
-            <h3 className="text-xl font-semibold mt-2">98</h3>
-            <p className="text-sm">Completed Trips</p>
+      {/* Statistics Section */}
+      <div className="bg-white py-12">
+        <div className="container mx-auto px-6">
+          <h2 className="text-3xl font-bold text-gray-800 text-center mb-8">
+            User Statistics
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {/* Average Rating Card */}
+            <div className="bg-gradient-to-r from-blue-400 to-blue-600 rounded-lg shadow-2xl p-8 text-center transform hover:scale-105 transition-transform duration-300">
+              <Star size={40} className="text-yellow-300 mx-auto" />
+              <h3 className="text-2xl font-bold mt-4">4.8</h3>
+              <p className="text-sm text-gray-100">Average Rating</p>
+            </div>
+
+            {/* Completed Trips Card */}
+            <div className="bg-gradient-to-r from-green-400 to-green-600 rounded-lg shadow-2xl p-8 text-center transform hover:scale-105 transition-transform duration-300">
+              <CheckCircle size={40} className="text-white mx-auto" />
+              <h3 className="text-2xl font-bold mt-4">98</h3>
+              <p className="text-sm text-gray-100">Completed Trips</p>
+            </div>
+
+            {/* Distance Traveled Card */}
+            <div className="bg-gradient-to-r from-purple-400 to-purple-600 rounded-lg shadow-2xl p-8 text-center transform hover:scale-105 transition-transform duration-300">
+              <MapPin size={40} className="text-white mx-auto" />
+              <h3 className="text-2xl font-bold mt-4">12,500 km</h3>
+              <p className="text-sm text-gray-100">Distance Traveled</p>
+            </div>
+
+            {/* Points Earned Card */}
+            <div className="bg-gradient-to-r from-pink-400 to-pink-600 rounded-lg shadow-2xl p-8 text-center transform hover:scale-105 transition-transform duration-300">
+              <Award size={40} className="text-white mx-auto" />
+              <h3 className="text-2xl font-bold mt-4">2,500</h3>
+              <p className="text-sm text-gray-100">Points Earned</p>
+            </div>
           </div>
         </div>
       </div>

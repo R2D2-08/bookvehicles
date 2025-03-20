@@ -4,8 +4,12 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { toast } from "sonner";
+import { useContext } from "react";
+import { UserContext } from "@/services/context";
 
 function Login() {
+
+  const {user_details, set_user} = useContext(UserContext);
   const router = useRouter();
   const [user, setUser] = useState({
     email: "",
@@ -43,6 +47,8 @@ function Login() {
       }
 
       const data = await response.json();
+      console.log(data);
+      set_user(data);
       toast.success("Login Successful");
 
       router.push("/booking");
