@@ -247,7 +247,8 @@ const refreshAccessToken = async (refreshToken) => {
 
   const newAccessToken = jwt.sign(
     {
-      userId: decodedRefreshToken.userId,
+      id: decodedRefreshToken.id,
+      role: decodedRefreshToken.role
     },
     process.env.JWT_SECRET,
     {
@@ -260,6 +261,8 @@ const refreshAccessToken = async (refreshToken) => {
 
 router.get("/profile", authenticate, async (req, res) => {
   try {
+    console.log("User id: ", req.user.id);
+    console.log(req.user);
     const user = await User.findOne({ where: { id: req.user.id } });
     if (req.role === "driver") {
       const driver = await Driver.findOne({ where: { user_id: req.user.id } });

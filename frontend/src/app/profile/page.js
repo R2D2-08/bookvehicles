@@ -11,6 +11,7 @@ import {
   Phone,
   Briefcase,
 } from "lucide-react";
+import { toast } from "sonner";
 
 const UserProfile = () => {
   const [user, setUser] = useState({
@@ -30,7 +31,8 @@ const UserProfile = () => {
           credentials: "include",
         });
         if (!response.ok) {
-          throw new Error("Failed to fetch user");
+          toast.error("Profile fetch failed");
+          console.log(response);
         }
         const data = await response.json();
         setUser(data);
