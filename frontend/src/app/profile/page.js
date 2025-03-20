@@ -19,6 +19,7 @@ const UserProfile = () => {
       name: "",
       email: "",
       phone_no: "",
+      rating: 0
     },
   });
   const [loading, setLoading] = useState(true);

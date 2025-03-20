@@ -5,13 +5,6 @@ import { Car, Compass, Bike } from "lucide-react";
 import { useRouter } from "next/navigation";
 import io from "socket.io-client";
 import { toast } from "sonner";
-import { Princess_Sofia } from "next/font/google";
-
-const socket = io("http://localhost:5000", {
-  reconnection: true,
-  reconnectionAttempts: 5,
-  reconnectionDelay: 1000,
-});
 
 const SelectRide = () => {
   const router = useRouter();
@@ -22,19 +15,27 @@ const SelectRide = () => {
   const [dropCoordinates, setDropCoordinates] = useState(null);
 
   useEffect(() => {
-    const pickLoc = JSON.parse(localStorage.getItem("pickLocCoordinates"));
-    const dropLoc = JSON.parse(localStorage.getItem("dropLocCoordinates"));
-    const pickLocStr = localStorage.getItem("pickLocation");
-    const dropLocStr = localStorage.getItem("dropLocation");
+    if (typeof window !== "undefined") {
+      const pickLoc = JSON.parse(localStorage.getItem("pickLocCoordinates"));
+      const dropLoc = JSON.parse(localStorage.getItem("dropLocCoordinates"));
+      const pickLocStr = localStorage.getItem("pickLocation");
+      const dropLocStr = localStorage.getItem("dropLocation");
 
-    if (pickLoc && dropLoc && pickLocStr && dropLocStr) {
-      setPickLoc(pickLocStr);
-      setDropLoc(dropLocStr);
-      setPickCoordinates(pickLoc);
-      setDropCoordinates(dropLoc);
+      if (pickLoc && dropLoc && pickLocStr && dropLocStr) {
+        setPickLoc(pickLocStr);
+        setDropLoc(dropLocStr);
+        setPickCoordinates(pickLoc);
+        setDropCoordinates(dropLoc);
+      }
     }
+  }, []);
 
-    console.log(pickLoc);
+  useEffect(() => {
+    const socket = io("http://localhost:5000", {
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
+    });
 
     const handleRideAccepted = ({ driverId }) => {
       toast.success(`Ride accepted by Driver ${driverId}`);
@@ -141,9 +142,11 @@ const SelectRide = () => {
       pickCoordinates,
       dropCoordinates,
       price: estimatedPrice(selected),
-      booking_date: Date.now()
+      booking_date: new Date().toISOString(), // Use a consistent format
     };
 
+    console.log("Sending booking request");
+    const socket = io("http://localhost:5000");
     socket.emit("book_request", bookingData);
   };
 
