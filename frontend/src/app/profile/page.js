@@ -36,6 +36,7 @@ const UserProfile = () => {
         }
         const data = await response.json();
         setUser(data);
+        console.log(data);
         setLoading(false);
       } catch (error) {
         console.error(error);
@@ -92,7 +93,7 @@ const UserProfile = () => {
             {/* Average Rating Card */}
             <div className="bg-gradient-to-r from-blue-400 to-blue-600 rounded-lg shadow-2xl p-8 text-center transform hover:scale-105 transition-transform duration-300">
               <Star size={40} className="text-yellow-300 mx-auto" />
-              <h3 className="text-2xl font-bold mt-4">4.8</h3>
+              <h3 className="text-2xl font-bold mt-4">{user.user.rating ?? 0}</h3>
               <p className="text-sm text-gray-100">Average Rating</p>
             </div>
 
@@ -113,7 +114,7 @@ const UserProfile = () => {
             {/* Points Earned Card */}
             <div className="bg-gradient-to-r from-pink-400 to-pink-600 rounded-lg shadow-2xl p-8 text-center transform hover:scale-105 transition-transform duration-300">
               <Award size={40} className="text-white mx-auto" />
-              <h3 className="text-2xl font-bold mt-4">2,500</h3>
+              <h3 className="text-2xl font-bold mt-4">{user.passenger.points ?? 0}</h3>
               <p className="text-sm text-gray-100">Points Earned</p>
             </div>
           </div>

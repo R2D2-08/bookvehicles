@@ -6,14 +6,12 @@ import { useContext } from "react";
 import { UserContext } from "@/services/context";
 import Link from "next/link";
 
-// Reusable NavLink component
 const NavLink = ({ href, children }) => (
   <Link href={href} className="hover:text-gray-300">
     {children}
   </Link>
 );
 
-// Reusable Button component
 const NavButton = ({ onClick, children }) => (
   <button
     className="bg-white text-black font-semibold px-4 py-2 rounded-2xl hover:bg-gray-100 transition"
@@ -39,7 +37,7 @@ export default function Navbar() {
   };
 
   return (
-    <nav className="bg-black text-white px-6 py-4 flex items-center justify-between">
+    <nav className="bg-black text-white px-6 py-4 z-10 flex items-center justify-between">
       <div className="text-2xl font-bold">RideBook</div>
 
       <div className="hidden md:flex items-center space-x-6">
@@ -68,7 +66,7 @@ export default function Navbar() {
 
 
       {isOpen && (
-        <div className="absolute top-16 left-0 w-full bg-black text-white flex flex-col items-center space-y-4 py-6 md:hidden">
+        <div className="absolute top-16 z-10 left-0 w-full bg-black text-white flex flex-col items-center space-y-4 py-6 md:hidden">
           {links.map((link) => (
             <NavLink key={link.label} href={link.href}>
               {link.label}

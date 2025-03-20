@@ -3,25 +3,59 @@
 import React, { useEffect, useState } from "react";
 import { Car, Compass, Bike } from "lucide-react";
 import { useRouter } from "next/navigation";
+import io from "socket.io-client";
+import { toast } from "sonner";
+import { Princess_Sofia } from "next/font/google";
+
+const socket = io("http://localhost:5000", {
+  reconnection: true,
+  reconnectionAttempts: 5,
+  reconnectionDelay: 1000,
+});
 
 const SelectRide = () => {
   const router = useRouter();
   const [selected, setSelected] = useState(0);
+  const [pickLoc, setPickLoc] = useState(null);
+  const [dropLoc, setDropLoc] = useState(null);
   const [pickCoordinates, setPickCoordinates] = useState(null);
   const [dropCoordinates, setDropCoordinates] = useState(null);
-
 
   useEffect(() => {
     const pickLoc = JSON.parse(localStorage.getItem("pickLocCoordinates"));
     const dropLoc = JSON.parse(localStorage.getItem("dropLocCoordinates"));
-    if (pickLoc && dropLoc) {
+    const pickLocStr = localStorage.getItem("pickLocation");
+    const dropLocStr = localStorage.getItem("dropLocation");
+
+    if (pickLoc && dropLoc && pickLocStr && dropLocStr) {
+      setPickLoc(pickLocStr);
+      setDropLoc(dropLocStr);
       setPickCoordinates(pickLoc);
       setDropCoordinates(dropLoc);
     }
+
+    console.log(pickLoc);
+
+    const handleRideAccepted = ({ driverId }) => {
+      toast.success(`Ride accepted by Driver ${driverId}`);
+      router.push("/eta");
+    };
+
+    socket.on("ride_accepted", handleRideAccepted);
+
+    socket.on("connect_error", (error) => {
+      console.error("WebSocket connection error:", error);
+      toast.error("Failed to connect to the server");
+    });
+
+    return () => {
+      socket.off("ride_accepted", handleRideAccepted);
+      socket.disconnect();
+    };
   }, []);
 
   const Haversine = (lat1, lon1, lat2, lon2) => {
-    const R = 6371e3; 
+    const R = 6371e3;
     const phi_1 = (lat1 * Math.PI) / 180;
     const phi_2 = (lat2 * Math.PI) / 180;
     const diff_phi = ((lat2 - lat1) * Math.PI) / 180;
@@ -36,7 +70,7 @@ const SelectRide = () => {
 
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
-    return Math.ceil(R * c); 
+    return Math.ceil(R * c);
   };
 
   const pricing = [
@@ -47,26 +81,70 @@ const SelectRide = () => {
   ];
 
   const rides = [
-    { name: "Premium Cab", desc: "Luxury vehicles with top drivers", icon: <Car />, speed: 13.888 },
-    { name: "Standard Cab", desc: "Comfortable rides up to 4", icon: <Car />, speed: 13.888 },
-    { name: "Auto", desc: "Affordable rides up to 3 people", icon: <Compass />, speed: 8.333 },
-    { name: "Bike", desc: "Quick rides for single passenger", icon: <Bike />, speed: 11.11 },
+    {
+      name: "Premium Cab",
+      desc: "Luxury vehicles with top drivers",
+      icon: <Car />,
+      speed: 13.888,
+    },
+    {
+      name: "Standard Cab",
+      desc: "Comfortable rides up to 4",
+      icon: <Car />,
+      speed: 13.888,
+    },
+    {
+      name: "Auto",
+      desc: "Affordable rides up to 3 people",
+      icon: <Compass />,
+      speed: 8.333,
+    },
+    {
+      name: "Bike",
+      desc: "Quick rides for single passenger",
+      icon: <Bike />,
+      speed: 11.11,
+    },
   ];
 
-  const distance = pickCoordinates && dropCoordinates
-    ? Haversine(pickCoordinates[0], pickCoordinates[1], dropCoordinates[0], dropCoordinates[1])
-    : null;
+  const distance =
+    pickCoordinates && dropCoordinates
+      ? Haversine(
+          pickCoordinates[0],
+          pickCoordinates[1],
+          dropCoordinates[0],
+          dropCoordinates[1]
+        )
+      : null;
 
   const estimatedTime = (rideSpeed) => {
     if (!distance || !rideSpeed) return null;
-    return Math.ceil(distance / (rideSpeed * 60)); 
+    return Math.ceil(distance / (rideSpeed * 60));
   };
 
   const estimatedPrice = (selected) => {
     if (!distance) return null;
     const { baseFare, perKm, serviceFee } = pricing[selected];
-    const distanceKm = distance / 1000; 
+    const distanceKm = distance / 1000;
     return baseFare + perKm * Math.ceil(distanceKm) + serviceFee;
+  };
+
+  const sendBookingRequest = () => {
+    if (!pickCoordinates || !dropCoordinates) {
+      return;
+    }
+
+    const bookingData = {
+      rideType: selected,
+      pickLoc,
+      dropLoc,
+      pickCoordinates,
+      dropCoordinates,
+      price: estimatedPrice(selected),
+      booking_date: Date.now()
+    };
+
+    socket.emit("book_request", bookingData);
   };
 
   return (
@@ -81,7 +159,11 @@ const SelectRide = () => {
           <div
             key={index}
             onClick={() => setSelected(index)}
-            className={`${index === selected ? "border-black border-2" : "border-neutral-300"} cursor-pointer flex flex-col sm:flex-row items-center justify-between p-4 rounded-lg hover:shadow-md transition-shadow`}
+            className={`${
+              index === selected
+                ? "border-black border-2"
+                : "border-neutral-300"
+            } cursor-pointer flex flex-col sm:flex-row items-center justify-between p-4 rounded-lg hover:shadow-md transition-shadow`}
           >
             <div className="flex items-center gap-4">
               <div className="w-8 h-8 text-gray-600">{ride.icon}</div>
@@ -107,13 +189,23 @@ const SelectRide = () => {
               </h2>
             )}
           </div>
-          <p className="text-base text-neutral-700 mt-1">Price may vary due to traffic and waiting time</p>
+          <p className="text-base text-neutral-700 mt-1">
+            Price may vary due to traffic and waiting time
+          </p>
         </div>
         <div className="flex gap-x-3">
-          <button className="py-2 px-3 bg-black text-white rounded-md" onClick={() => router.push("/booking")}>
+          <button
+            className="py-2 px-3 bg-black text-white rounded-md"
+            onClick={() => router.push("/booking")}
+          >
             Back
           </button>
-          <button className="py-2 px-3 border border-black rounded-md">Continue</button>
+          <button
+            className="py-2 px-3 border border-black rounded-md"
+            onClick={sendBookingRequest}
+          >
+            Continue
+          </button>
         </div>
       </div>
     </div>
