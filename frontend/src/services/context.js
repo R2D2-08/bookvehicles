@@ -19,8 +19,7 @@ export const UserProvider = ({ children }) => {
       });
 
       if(!response.ok) {
-        const data = await response.json();
-        toast.error(data.error);
+        toast.error("Failed to fetch details");
         router.replace("/login");
       }
 

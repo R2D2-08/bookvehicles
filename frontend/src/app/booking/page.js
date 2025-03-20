@@ -6,6 +6,7 @@ import "leaflet/dist/leaflet.css";
 import { ArrowRight, MapPin } from "lucide-react";
 import { useMap } from "react-leaflet";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 const MapContainer = dynamic(
   () => import("react-leaflet").then((mod) => mod.MapContainer),
@@ -34,6 +35,7 @@ const Booking = () => {
   const [pickLatLong, setPickLatLong] = useState(null);
   const [dropLatLong, setDropLatLong] = useState(null);
   const [customIcon, setCustomIcon] = useState(null);
+  const [isClient, setIsClient] = useState(false); // Track client-side rendering
 
   // Load custom icon
   useEffect(() => {
@@ -61,7 +63,7 @@ const Booking = () => {
       if (!location) return;
       try {
         const response = await fetch(`${locationApi}${encodeURIComponent(location)}`);
-        if (!response.ok) throw new Error("Location fetch failed");
+        if (!response.ok) toast.error("Failed to fetch location");
 
         const res = await response.json();
         if (res.length > 0) {
@@ -79,18 +81,22 @@ const Booking = () => {
 
   // Save to localStorage only after coordinates are updated
   useEffect(() => {
-    if (pickLatLong) {
-      localStorage.setItem("pickLocation", pickLocation);
-      localStorage.setItem("pickLocCoordinates", JSON.stringify(pickLatLong));
+    if (typeof window !== "undefined") {
+      if (pickLatLong) {
+        localStorage.setItem("pickLocation", pickLocation);
+        localStorage.setItem("pickLocCoordinates", JSON.stringify(pickLatLong));
+      }
+      if (dropLatLong) {
+        localStorage.setItem("dropLocation", dropLocation);
+        localStorage.setItem("dropLocCoordinates", JSON.stringify(dropLatLong));
+      }
     }
-  }, [pickLatLong, pickLocation]);
+  }, [pickLatLong, pickLocation, dropLatLong, dropLocation]);
 
+  // Set isClient to true after component mounts
   useEffect(() => {
-    if (dropLatLong) {
-      localStorage.setItem("dropLocation", dropLocation);
-      localStorage.setItem("dropLocCoordinates", JSON.stringify(dropLatLong));
-    }
-  }, [dropLatLong, dropLocation]);
+    setIsClient(true);
+  }, []);
 
   const SetView = ({ center }) => {
     const map = useMap();
@@ -102,6 +108,7 @@ const Booking = () => {
 
   return (
     <div className="flex flex-col md:flex-row h-screen w-full bg-gray-100">
+      {/* Left Side (Form) */}
       <div className="w-full md:w-1/3 p-6 flex flex-col justify-center bg-white md:min-h-screen">
         <h1 className="text-2xl md:text-3xl font-bold mb-6 text-center md:text-left">Book a Ride</h1>
 
@@ -138,36 +145,39 @@ const Booking = () => {
         </button>
       </div>
 
+      {/* Right Side (Map) */}
       <div className="w-full md:w-2/3 h-[50vh] md:h-screen relative">
-        <MapContainer
-          center={defaultPosition}
-          zoom={12}
-          scrollWheelZoom={false}
-          className="w-full h-full rounded-lg"
-        >
-          <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          />
+        {isClient && ( // Render the map only on the client
+          <MapContainer
+            center={defaultPosition}
+            zoom={12}
+            scrollWheelZoom={false}
+            className="w-full h-full rounded-lg"
+          >
+            <TileLayer
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            />
 
-          {pickLatLong && customIcon && (
-            <>
-              <SetView center={pickLatLong} />
-              <Marker position={pickLatLong} icon={customIcon}>
-                <Popup>Pickup Location</Popup>
-              </Marker>
-            </>
-          )}
+            {pickLatLong && customIcon && (
+              <>
+                <SetView center={pickLatLong} />
+                <Marker position={pickLatLong} icon={customIcon}>
+                  <Popup>Pickup Location</Popup>
+                </Marker>
+              </>
+            )}
 
-          {dropLatLong && customIcon && (
-            <>
-              <SetView center={dropLatLong} />
-              <Marker position={dropLatLong} icon={customIcon}>
-                <Popup>Drop Location</Popup>
-              </Marker>
-            </>
-          )}
-        </MapContainer>
+            {dropLatLong && customIcon && (
+              <>
+                <SetView center={dropLatLong} />
+                <Marker position={dropLatLong} icon={customIcon}>
+                  <Popup>Drop Location</Popup>
+                </Marker>
+              </>
+            )}
+          </MapContainer>
+        )}
       </div>
     </div>
   );
