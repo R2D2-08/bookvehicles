@@ -139,7 +139,9 @@ router.post("/login", async (req, res) => {
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
-    res.status(200).json({ message: "Login successful", email, name: user.name });
+    res
+      .status(200)
+      .json({ message: "Login successful", email, name: user.name });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -188,78 +190,82 @@ router.get("/check-auth", async (req, res) => {
   const accessToken = req.cookies.accessToken;
 
   if (!accessToken) {
-    const newAccessToken = await refreshAccessToken(req.cookies.refreshToken);
     try {
+      const newAccessToken = await refreshAccessToken(req.cookies.refreshToken);
+      if (!newAccessToken) {
+        return res
+          .status(401)
+          .json({ message: "Session expired. Please log in again." });
+      }
       res.cookie("accessToken", newAccessToken, {
         ...cookieOptions,
         maxAge: 15 * 60 * 1000,
       });
-      return res.status(200).json({
-        isAuthenticated: true
-      });
-    } catch(err) {
-      return res.status(401).json({
-        message: "Session expired. Please log in again."
-      })
+      return res.status(200).json({ isAuthenticated: true });
+    } catch (err) {
+      return res
+        .status(401)
+        .json({ message: "Session expired. Please log in again." });
     }
   }
+
   try {
     const decoded = jwt.verify(accessToken, process.env.JWT_SECRET);
     console.log(decoded);
-
-    return res.status(200).json({
-      isAuthenticated: true,
-    });
+    return res.status(200).json({ isAuthenticated: true });
   } catch (error) {
-    if (error.name === "TokenExpiredError") {
+    if (error.name === "TokenExpiredError" && req.cookies.refreshToken) {
       try {
         const newAccessToken = await refreshAccessToken(
           req.cookies.refreshToken
         );
-
+        if (!newAccessToken) {
+          return res.status(401).json({ message: "Authentication failed" });
+        }
         res.cookie("accessToken", newAccessToken, {
-          ...cookieOptions, 
-          maxAge: 15 * 60 * 1000
+          ...cookieOptions,
+          maxAge: 15 * 60 * 1000,
         });
-        return res.status(200).json({
-          isAuthenticated: true,
-        });
+        return res.status(200).json({ isAuthenticated: true });
       } catch (err) {
         return res
           .status(401)
           .json({ message: "Session expired. Please log in again." });
       }
     }
-    return res.status(401).json({
-      message: "Authentication failed"
-    });
-  }  
+    return res.status(401).json({ message: "Authentication failed" });
+  }
 });
 
 const refreshAccessToken = async (refreshToken) => {
   if (!refreshToken) {
-    throw new Error("No refresh token found");
+    return null;
   }
-  const decodedRefreshToken = jwt.verify(
-    refreshToken,
-    process.env.REFRESH_SECRET
-  );
 
-  const newAccessToken = jwt.sign(
-    {
-      userId: decodedRefreshToken.userId,
-    },
-    process.env.JWT_SECRET,
-    {
-      expiresIn: "15m",
+  try {
+    const decodedRefreshToken = jwt.verify(
+      refreshToken,
+      process.env.REFRESH_SECRET
+    );
+
+    if (!decodedRefreshToken || !decodedRefreshToken.userId) {
+      return null;
     }
-  );
 
-  return newAccessToken;
+    return jwt.sign(
+      { userId: decodedRefreshToken.userId },
+      process.env.JWT_SECRET,
+      { expiresIn: "15m" }
+    );
+  } catch (error) {
+    console.error("Error refreshing token:", error.message);
+    return null;
+  }
 };
 
 router.get("/profile", authenticate, async (req, res) => {
   try {
+    console.log(req.user || req.cookies);
     const user = await User.findOne({ where: { id: req.user.id } });
     if (req.role === "driver") {
       const driver = await Driver.findOne({ where: { user_id: req.user.id } });
