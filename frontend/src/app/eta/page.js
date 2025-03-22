@@ -79,7 +79,7 @@ export default function LiveETA() {
         >
           <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
           <Marker position={[driverLocation.lat, driverLocation.lng]} icon={driverIcon}>
-            <Popup>Driver's Location</Popup>
+            <Popup>Driver&apos;s Location</Popup>
           </Marker>
         </MapContainer>
       </motion.div>
