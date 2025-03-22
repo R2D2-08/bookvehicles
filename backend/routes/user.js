@@ -11,8 +11,9 @@ const path = require("path");
 const fs = require("fs");
 const { serialize } = require("v8");
 const { doesNotMatch } = require("assert");
-const { authenticate } = require("../middleware/auth");
+const { authenticate, authorize } = require("../middleware/auth");
 const { decode } = require("punycode");
+const { where } = require("sequelize");
 const uploadDir = path.join(__dirname, "../uploads");
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
@@ -172,9 +173,23 @@ router.post("/refresh", (req, res) => {
   });
 });
 
-router.get("/", async (req, res) => {
+router.get(
+  "/passengers",
+  authenticate,
+  authorize(["admin"]),
+  async (req, res) => {
+    try {
+      const users = await User.findAll({ where: { role: "user" } });
+      res.json(users);
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  }
+);
+
+router.get("/drivers", authenticate, authorize(["admin"]), async (req, res) => {
   try {
-    const users = await User.findAll();
+    const users = await User.findAll({ where: { role: "driver" } });
     res.json(users);
   } catch (err) {
     res.status(500).json({ error: err.message });

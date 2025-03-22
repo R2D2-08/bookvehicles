@@ -26,9 +26,9 @@ export default function Navbar() {
   const { user_details, set_user } = useContext(UserContext);
 
   const links = [
-    { href: "#", label: "Ride" },
-    { href: "#", label: "Drive" },
-    { href: "#", label: "Help" },
+    { href: "/", label: "Ride" },
+    { href: "/driversignup", label: "Drive" },
+    { href: "/", label: "Help" },
     { href: "/signup", label: "Sign up" },
   ];
 

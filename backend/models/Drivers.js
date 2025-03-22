@@ -33,16 +33,7 @@ const Driver = sequelize.define(
       defaultValue: true,
     },
   },
-  {
-    validate: {
-      async photoRequiredForDriver() {
-        const user = await User.findByPk(this.user_id);
-        if (user && user.role === "driver" && !user.photo_url) {
-          throw new Error("Drivers must have a photo.");
-        }
-      },
-    },
-  }
+  {}
 );
 
 Vehicle.hasOne(Driver, { foreignKey: "vehicle_id", onDelete: "CASCADE" });

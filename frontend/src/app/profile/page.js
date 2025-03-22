@@ -40,7 +40,6 @@ const UserProfile = () => {
         }
         const data = await response.json();
         setUser(data);
-        console.log(data);
         setLoading(false);
       } catch (error) {
         console.error(error);
@@ -72,13 +71,13 @@ const UserProfile = () => {
               />
             </div>
             <h1 className="text-4xl font-bold flex items-center gap-3">
-              <User size={32} /> {user.user?.name ?? "User"}
+              <User size={32} /> {user.user?.name}
             </h1>
             <p className="text-lg flex items-center gap-3">
-              <Mail size={20} /> {user.user?.email ?? "Email"}
+              <Mail size={20} /> {user.user?.email}
             </p>
             <p className="text-lg flex items-center gap-3">
-              <Phone size={20} /> {user.user?.phone_no ?? "Phone Number"}
+              <Phone size={20} /> {user.user?.phone_no}
             </p>
             <p className="text-lg flex items-center gap-3">
               <Briefcase size={20} /> Gold Member
