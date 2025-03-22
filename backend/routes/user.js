@@ -55,7 +55,7 @@ router.post("/register", upload.single("profileImage"), async (req, res) => {
   try {
     const { name, email, password, phone_no, role, license_no, vehicle } =
       req.body;
-    console.log(req.body);
+    console.log(req.body, 'checking out router.post(/register)');
 
     const existingUser = await User.findOne({ where: { email } });
     if (existingUser)
