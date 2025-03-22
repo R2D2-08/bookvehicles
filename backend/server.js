@@ -62,6 +62,22 @@ io.on("connection", (socket) => {
       driverSocket.emit("new_ride_request", { requestId, data});
     });
   });
+  
+  socket.on("driver_location", ({ driverId, lat, lng }) => {
+    console.log(`Driver ${driverId} location: ${lat}, ${lng}`);
+
+    // Find the rider who booked the ride
+    const rideRequest = Object.values(booking_requests).find(
+      (req) => req.accepted && req.rider
+    );
+
+    if (rideRequest) {
+      const riderSocket = io.sockets.sockets.get(rideRequest.rider);
+      if (riderSocket) {
+        riderSocket.emit("driver_location_update", { lat, lng });
+      }
+    }
+  });
 
   socket.on("accept_ride", ({ requestId, driverId }) => {
     if (booking_requests[requestId] && !booking_requests[requestId].accepted) {

@@ -92,11 +92,44 @@ const DriverDashboard = () => {
   ]);
   const [activeRide, setActiveRide] = useState(null);
 
-  const handleAccept = (id) => {
-    setActiveRide(rideRequests.find((req) => req.id === id));
-    setRideRequests([]);
-  };
+  let locationInterval;
 
+  const handleAccept = (id) => {
+    const acceptedRide = rideRequests.find((req) => req.id === id);
+  
+    if (acceptedRide) {
+      setActiveRide(acceptedRide);
+      setRideRequests([]);
+  
+      // Emit ride acceptance
+      socket.emit("rideAccepted", {
+        driverId: driver.id, // Ensure you have the driver ID
+        rideId: acceptedRide.id,
+        pickupLocation: acceptedRide.pickupLocation,
+        dropoffLocation: acceptedRide.dropoffLocation,
+      });
+  
+      // Start sending live location
+      locationInterval = setInterval(() => {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const { latitude, longitude } = position.coords;
+            socket.emit("driverLocation", {
+              driverId: driver.id,
+              rideId: acceptedRide.id,
+              latitude,
+              longitude,
+            });
+          },
+          (error) => {
+            console.error("Error getting location:", error);
+          }
+        );
+      }, 5000); // Send location every 5 seconds
+    }
+  };
+  
+  
   const handleReject = (id) => {
     setRideRequests(rideRequests.filter((request) => request.id !== id));
   };
