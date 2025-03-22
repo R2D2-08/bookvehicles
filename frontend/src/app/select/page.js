@@ -35,6 +35,7 @@ const SelectRide = () => {
       reconnection: true,
       reconnectionAttempts: 5,
       reconnectionDelay: 1000,
+      withCredentials: true,
     });
 
     const handleRideAccepted = ({ driverId }) => {
@@ -134,7 +135,6 @@ const SelectRide = () => {
     if (!pickCoordinates || !dropCoordinates) {
       return;
     }
-
     const bookingData = {
       rideType: selected,
       pickLoc,

@@ -8,6 +8,7 @@ import { Toaster } from "sonner";
 import { usePathname } from "next/navigation";
 import ProtectedRoutes from "@/services/protected";
 import { UserProvider } from "@/services/context";
+import { useState, useEffect } from "react";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -20,27 +21,33 @@ const geistMono = Geist_Mono({
 });
 
 export default function RootLayout({ children }) {
+  const [mounted, setMounted] = useState(false);
   const pathname = usePathname();
   const publicRoutes = ["/", "/login", "/signup"];
 
-  console.log("publicRoutes:", publicRoutes);
-  console.log("pathname:", pathname);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   return (
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <UserProvider>
-          <Navbar />
-          <Toaster position="top-right" richColors />
-          {publicRoutes.includes(pathname) ? (
-            children
-          ) : (
-            <ProtectedRoutes>{children}</ProtectedRoutes>
-          )}
-          <Footer />
-        </UserProvider>
+        {mounted ? (
+          <UserProvider>
+            <Navbar />
+            <Toaster position="top-right" richColors />
+            {publicRoutes.includes(pathname) ? (
+              children
+            ) : (
+              <ProtectedRoutes>{children}</ProtectedRoutes>
+            )}
+            <Footer />
+          </UserProvider>
+        ) : (
+          <div /> // Ensures <html> and <body> are always present
+        )}
       </body>
     </html>
   );

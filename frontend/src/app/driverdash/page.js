@@ -49,19 +49,21 @@ const DriverDashboard = () => {
 
     const handleNewRideRequest = ({ requestId, data }) => {
       console.log(`New ride request ${requestId}`);
-      setRideRequests(rideRequests => [...rideRequests, {
-        id: 4,
-        name: "randomUser",
-        phone: "456",
-        pickup: data.pickLoc,
-        dropoff: data.dropLoc,
-        fare: data.price,
-        time: `${Math.floor((Date.now() - data.booking_date)/60)} mins ago`
-      }])
+      setRideRequests((rideRequests) => [
+        ...rideRequests,
+        {
+          id: 4,
+          name: "randomUser",
+          phone: "456",
+          pickup: data.pickLoc,
+          dropoff: data.dropLoc,
+          fare: data.price,
+          time: `${Math.floor((Date.now() - data.booking_date) / 60)} mins ago`,
+        },
+      ]);
     };
 
     socket.on("new_ride_request", handleNewRideRequest);
-
 
     return () => {
       socket.off("new_ride_request", handleNewRideRequest);
@@ -70,26 +72,7 @@ const DriverDashboard = () => {
   }, []);
   const [activeTab, setActiveTab] = useState("profile");
   const [isAvailable, setIsAvailable] = useState(true);
-  const [rideRequests, setRideRequests] = useState([
-    {
-      id: 1,
-      name: "John Doe",
-      phone: "+123456789",
-      pickup: [40.7128, -74.006],
-      dropoff: "Airport",
-      fare: "$25",
-      time: "2 mins ago",
-    },
-    {
-      id: 2,
-      name: "Jane Smith",
-      phone: "+987654321",
-      pickup: [40.758, -73.9855],
-      dropoff: "Train Station",
-      fare: "$15",
-      time: "5 mins ago",
-    },
-  ]);
+  const [rideRequests, setRideRequests] = useState([]);
   const [activeRide, setActiveRide] = useState(null);
 
   const handleAccept = (id) => {
@@ -111,18 +94,18 @@ const DriverDashboard = () => {
   const [review, setReview] = useState("");
 
   const notifyPassenger = () => {
-    setRideOngoing(true); 
+    setRideOngoing(true);
   };
 
   const endJourney = () => {
-    setShowReviewModal(true); 
+    setShowReviewModal(true);
   };
 
   const submitReview = () => {
     setShowReviewModal(false);
-    setActiveRide(null); 
-    setRideOngoing(false); 
-    setActiveTab("notifications"); 
+    setActiveRide(null);
+    setRideOngoing(false);
+    setActiveTab("notifications");
   };
 
   return (
@@ -199,7 +182,7 @@ const DriverDashboard = () => {
                   className="p-4 bg-gray-100 rounded-xl shadow flex flex-col gap-2"
                 >
                   <p className="text-gray-800 font-semibold">
-                    <strong>Pickup:</strong> {request.pickup} {" "}
+                    <strong>Pickup:</strong> {request.pickup}{" "}
                     <strong>Drop-off:</strong> {request.dropoff}
                   </p>
                   <p className="text-gray-600 font-medium">
