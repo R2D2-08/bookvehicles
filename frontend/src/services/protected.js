@@ -35,7 +35,7 @@ const ProtectedRoutes = ({ children, roles = []}) => {
         toast.error("Not authenticated");
         router.replace("/login"); // Immediate redirect without UI flicker
       } finally {
-        setLoading(false);
+        setTimeout(() => setLoading(false), 500);
       }
     };
 
