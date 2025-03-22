@@ -6,6 +6,7 @@ import { useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import Link from "next/link";
 import dynamic from "next/dynamic";
+import { useRouter } from "next/navigation";
 
 const MapContainer = dynamic(
   () => import("react-leaflet").then((mod) => mod.MapContainer),
@@ -28,6 +29,7 @@ const Popup = dynamic(() => import("react-leaflet").then((mod) => mod.Popup), {
 export default function Home() {
   const position = [51.505, -0.09];
   const [userLocation, setUserLocation] = useState(null);
+  const router = useRouter();
   useEffect(() => {
     if (typeof window !== undefined && navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
@@ -133,7 +135,7 @@ export default function Home() {
           <p className="text-lg text-gray-700 mb-6">
             Use your location to find the nearest available ride.
           </p>
-          <button className="rounded-2xl text-white bg-black py-4 px-8 text-lg font-semibold hover:bg-gray-800 transition-all duration-300">
+          <button className="rounded-2xl text-white bg-black py-4 px-8 text-lg font-semibold hover:bg-gray-800 transition-all duration-300" onClick={() => router.push("/booking")}>
             Use My Location
           </button>
         </section>
@@ -147,7 +149,7 @@ export default function Home() {
             Seamless rides, reliable drivers, and effortless booking. Move
             smarter with just a tap.
           </p>
-          <button className="w-full md:w-auto rounded-2xl text-white bg-black py-4 px-8 text-lg font-semibold hover:bg-gray-800 transition-all duration-300">
+          <button className="w-full md:w-auto rounded-2xl text-white bg-black py-4 px-8 text-lg font-semibold hover:bg-gray-800 transition-all duration-300" onClick={() => router.push("/booking")}>
             Book a Ride
           </button>
         </div>
@@ -181,7 +183,7 @@ export default function Home() {
             Choose from economy to premium rides and get to your destination
             hassle-free.
           </p>
-          <button className="w-full md:w-auto rounded-2xl text-white bg-black py-4 px-8 text-lg font-semibold hover:bg-gray-800 transition-all duration-300">
+          <button className="w-full md:w-auto rounded-2xl text-white bg-black py-4 px-8 text-lg font-semibold hover:bg-gray-800 transition-all duration-300" onClick={() => router.push("/booking")}>
             Explore Rides
           </button>
         </div>
@@ -193,10 +195,10 @@ export default function Home() {
             Your ride, your rules
           </h1>
           <p className="text-lg text-gray-700">
-            Whether commuting, traveling, or running errands, Uber gets you
+            Whether commuting, traveling, or running errands, we will gets you
             there effortlessly.
           </p>
-          <button className="w-full md:w-auto rounded-2xl text-white bg-black py-4 px-8 text-lg font-semibold hover:bg-gray-800 transition-all duration-300">
+          <button className="w-full md:w-auto rounded-2xl text-white bg-black py-4 px-8 text-lg font-semibold hover:bg-gray-800 transition-all duration-300" onClick={() => router.push("/booking")}>
             Get Started
           </button>
         </div>

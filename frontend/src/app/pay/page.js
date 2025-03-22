@@ -1,28 +1,50 @@
 "use client";
 import React, { useState } from "react";
+import { useEffect } from "react";
 import { motion } from "framer-motion";
 
 export default function PaymentPage() {
   const [rating, setRating] = useState(0);
   const [review, setReview] = useState("");
   const [paymentDone, setPaymentDone] = useState(false);
+  const [price, setPrice] = useState(0);
+  
+  useEffect(() => {
+    const storedPrice = JSON.parse(localStorage.getItem("ridePrice"));
+    if (storedPrice) setPrice(storedPrice);
+  }, []);
 
   const handlePayment = async () => {
-    const options = {
-      key: "YOUR_RAZORPAY_KEY",
-      amount: 50000, // Example: 500.00 INR
-      currency: "INR",
-      name: "Uber Clone",
-      description: "Ride Payment",
-      handler: function (response) {
-        setPaymentDone(true);
-        console.log("Payment successful:", response);
-      },
-      theme: { color: "#007AFF" },
-    };
+    // Load the Razorpay script dynamically
+    console.log("Razorpay Key:", process.env.REACT_APP_RAZORPAY_KEY);
 
-    const razor = new window.Razorpay(options);
-    razor.open();
+
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.async = true;
+    document.body.appendChild(script);
+  
+    script.onload = () => {
+      const options = {
+        key: "rzp_test_pCp8FyWWmu8vhd", // Use public key
+        amount: price * 100,
+        currency: "INR",
+        name: "Uber Clone",
+        description: "Ride Payment",
+        handler: function (response) {
+          setPaymentDone(true);
+          console.log("Payment successful:", response);
+        },
+        theme: { color: "#007AFF" },
+      };
+  
+      const razor = new window.Razorpay(options);
+      razor.open();
+    };
+  
+    script.onerror = () => {
+      console.error("Failed to load Razorpay script");
+    };
   };
 
   return (

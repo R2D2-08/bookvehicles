@@ -135,6 +135,7 @@ const SelectRide = () => {
     if (!pickCoordinates || !dropCoordinates) {
       return;
     }
+    const price = estimatedPrice(selected);
     const bookingData = {
       rideType: selected,
       pickLoc,
@@ -145,9 +146,12 @@ const SelectRide = () => {
       booking_date: new Date().toISOString(), // Use a consistent format
     };
 
+    localStorage.setItem("ridePrice", JSON.stringify(price));
+
     console.log("Sending booking request");
     const socket = io("http://localhost:5000");
     socket.emit("book_request", bookingData);
+    router.push("/eta");
   };
 
   return (
