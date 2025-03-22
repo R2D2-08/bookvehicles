@@ -22,6 +22,8 @@ const geistMono = Geist_Mono({
 export default function RootLayout({ children }) {
   const pathname = usePathname();
   const publicRoutes = ["/", "/login", "/signup"];
+  const adminRoutes = ["/admin"];
+  const driverRoutes = ["/driverdash"];
 
   console.log("publicRoutes:", publicRoutes);
   console.log("pathname:", pathname);
@@ -36,8 +38,12 @@ export default function RootLayout({ children }) {
           <Toaster position="top-right" richColors />
           {publicRoutes.includes(pathname) ? (
             children
+          ) : adminRoutes.includes(pathname) ? (
+            <ProtectedRoutes roles={["admin"]}>{children}</ProtectedRoutes>
+          ) : driverRoutes.includes(pathname) ? (
+            <ProtectedRoutes roles={["driver"]}>{children}</ProtectedRoutes>
           ) : (
-            <ProtectedRoutes>{children}</ProtectedRoutes>
+            <ProtectedRoutes roles={["user", "driver", "admin"]}>{children}</ProtectedRoutes>
           )}
           <Footer />
         </UserProvider>

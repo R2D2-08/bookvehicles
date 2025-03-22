@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
-const ProtectedRoutes = ({ children }) => {
+const ProtectedRoutes = ({ children, roles = []}) => {
   const router = useRouter();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   useEffect(() => {
@@ -21,6 +21,15 @@ const ProtectedRoutes = ({ children }) => {
         if (!response.ok) {
           toast.error("Not authenticated");
           router.push("/login");
+        }
+
+        console.log(roles);
+
+        const res = await response.json();
+        if(!roles.includes(res.role)) {
+          console.log(res.role);
+          toast.error("Not Authorized"); 
+          router.replace("/booking");
         }
         setIsAuthenticated(true);
       } catch (error) {
