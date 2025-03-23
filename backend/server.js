@@ -7,6 +7,7 @@ const { sequelize, syncDatabase } = require("./models");
 const routes = require("./routes");
 const cookieParser = require("cookie-parser");
 const http = require("http");
+const path = require('path')
 
 const app = express();
 const server = http.createServer(app);
@@ -21,6 +22,8 @@ app.use(
     contentSecurityPolicy: false,
   })
 );
+
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 app.use(cors({ origin: "http://localhost:3000", credentials: true }));
 app.use(morgan("dev"));
