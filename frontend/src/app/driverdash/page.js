@@ -1,4 +1,5 @@
 "use client";
+import io from "socket.io-client";
 import React, { useState, useEffect } from "react";
 import UserProfile from "../profile/page.js";
 import Image from "next/image";
@@ -13,7 +14,6 @@ import {
   Phone,
   UserCircle,
 } from "lucide-react";
-import { io } from "socket.io-client";
 
 import dynamic from "next/dynamic";
 import "leaflet/dist/leaflet.css"; // Import Leaflet styles globally
@@ -37,10 +37,22 @@ const Popup = dynamic(() => import("react-leaflet").then((mod) => mod.Popup), {
 
 const DriverDashboard = () => {
   const [isClient, setIsClient] = useState(false);
+  const [socket, setSocket] = useState(
+    io("http://localhost:5000", {
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
+      withCredentials: true,
+    })
+  );
   useEffect(() => {
     setIsClient(true);
-    setIsClient(true);
-    const socket = io("http://localhost:5000");
+    const socket = io("http://localhost:5000", {
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
+      withCredentials: true,
+    });
 
     socket.on("connect", () => {
       console.log("Connected to server");
@@ -52,7 +64,7 @@ const DriverDashboard = () => {
       setRideRequests((rideRequests) => [
         ...rideRequests,
         {
-          id: 4,
+          id: requestId,
           name: "randomUser",
           phone: "456",
           pickup: data.pickLoc,
@@ -79,40 +91,38 @@ const DriverDashboard = () => {
 
   const handleAccept = (id) => {
     const acceptedRide = rideRequests.find((req) => req.id === id);
-  
+
     if (acceptedRide) {
       setActiveRide(acceptedRide);
       setRideRequests([]);
-  
+
       // Emit ride acceptance
-      socket.emit("rideAccepted", {
-        driverId: driver.id, // Ensure you have the driver ID
-        rideId: acceptedRide.id,
+      socket.emit("accept_ride", {
+        requestId: acceptedRide.id,
         pickupLocation: acceptedRide.pickupLocation,
         dropoffLocation: acceptedRide.dropoffLocation,
       });
-  
+
       // Start sending live location
-      locationInterval = setInterval(() => {
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            const { latitude, longitude } = position.coords;
-            socket.emit("driverLocation", {
-              driverId: driver.id,
-              rideId: acceptedRide.id,
-              latitude,
-              longitude,
-            });
-          },
-          (error) => {
-            console.error("Error getting location:", error);
-          }
-        );
-      }, 5000); // Send location every 5 seconds
+      // locationInterval = setInterval(() => {
+      //   navigator.geolocation.getCurrentPosition(
+      //     (position) => {
+      //       const { latitude, longitude } = position.coords;
+      //       socket.emit("driverLocation", {
+      //         driverId: driver.id,
+      //         rideId: acceptedRide.id,
+      //         latitude,
+      //         longitude,
+      //       });
+      //     },
+      //     (error) => {
+      //       console.error("Error getting location:", error);
+      //     }
+      //   );
+      // }, 5000); // Send location every 5 seconds
     }
   };
-  
-  
+
   const handleReject = (id) => {
     setRideRequests(rideRequests.filter((request) => request.id !== id));
   };

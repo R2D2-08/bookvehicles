@@ -7,7 +7,8 @@ const { sequelize, syncDatabase } = require("./models");
 const routes = require("./routes");
 const cookieParser = require("cookie-parser");
 const http = require("http");
-
+const cookie = require("cookie");
+const jwt = require("jsonwebtoken");
 const app = express();
 const server = http.createServer(app);
 const { Server } = require("socket.io");
@@ -36,7 +37,19 @@ const driverLocations = {};
 const booking_requests = {};
 
 io.on("connection", (socket) => {
-  console.log("A user connected: ", socket.id);
+  const cookies = cookie.parse(socket.handshake.headers.cookie || "");
+  const accessToken = cookies.Accesstoken; // Adjust the cookie name if needed
+
+  if (accessToken) {
+    try {
+      const decoded = jwt.verify(accessToken, "your_secret_key"); // Replace with your actual secret key
+      const userId = decoded.userId; // Adjust based on your token structure
+      console.log(`User connected with ID: ${userId}`);
+      socket.userId = userId; // Store user ID in socket for later use
+    } catch (err) {
+      console.log("Invalid or expired access token");
+    }
+  }
 
   socket.on("driver_register", () => {
     activeDrivers[socket.id] = socket;
@@ -80,7 +93,7 @@ io.on("connection", (socket) => {
       driverSocket.emit("new_ride_request", { requestId, data });
     });
   });
-  
+
   socket.on("driver_location", ({ driverId, lat, lng }) => {
     console.log(`Driver ${driverId} location: ${lat}, ${lng}`);
 
@@ -98,13 +111,21 @@ io.on("connection", (socket) => {
   });
 
   socket.on("accept_ride", ({ requestId, driverId }) => {
+    console.log(`Driver ${driverId} accepted ride ${requestId}`);
+    console.log("Booking requests:vhdvsvhs ", booking_requests[requestId]);
+    console.log(
+      "booking_requests[requestId].accepted: ",
+      booking_requests[requestId].accepted
+    );
     if (booking_requests[requestId] && !booking_requests[requestId].accepted) {
       booking_requests[requestId].accepted = true;
       booking_requests[requestId].driverId = driverId;
       const riderSocketId = booking_requests[requestId].rider;
       const riderSocket = io.sockets.sockets.get(riderSocketId);
-
+      console.log("Booking requests: ", booking_requests);
+      console.log("Rider socket: ", riderSocket);
       if (riderSocket) {
+        console.log("Rider socket found");
         riderSocket.emit("ride_accepted", {
           driverId,
           requestId,

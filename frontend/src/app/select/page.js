@@ -151,7 +151,6 @@ const SelectRide = () => {
     console.log("Sending booking request");
     const socket = io("http://localhost:5000");
     socket.emit("book_request", bookingData);
-    router.push("/eta");
   };
 
   return (
