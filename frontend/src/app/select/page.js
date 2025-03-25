@@ -1,10 +1,58 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { Car, Compass, Bike } from "lucide-react";
 import { useRouter } from "next/navigation";
 import io from "socket.io-client";
 import { toast } from "sonner";
+
+const PRICING = [
+  { baseFare: 50, perKm: 15, perMin: 2, serviceFee: 10 },
+  { baseFare: 30, perKm: 12, perMin: 1.5, serviceFee: 8 },
+  { baseFare: 20, perKm: 10, perMin: 1, serviceFee: 5 },
+  { baseFare: 15, perKm: 8, perMin: 0.8, serviceFee: 3 },
+];
+
+const RIDES = [
+  {
+    name: "Premium Cab",
+    desc: "Luxury vehicles with top drivers",
+    icon: <Car />,
+    speed: 13.888,
+  },
+  {
+    name: "Standard Cab",
+    desc: "Comfortable rides up to 4",
+    icon: <Car />,
+    speed: 13.888,
+  },
+  {
+    name: "Auto",
+    desc: "Affordable rides up to 3 people",
+    icon: <Compass />,
+    speed: 8.333,
+  },
+  {
+    name: "Bike",
+    desc: "Quick rides for single passenger",
+    icon: <Bike />,
+    speed: 11.11,
+  },
+];
+
+const Haversine = (lat1, lon1, lat2, lon2) => {
+  const R = 6371e3;
+  const φ1 = (lat1 * Math.PI) / 180;
+  const φ2 = (lat2 * Math.PI) / 180;
+  const Δφ = ((lat2 - lat1) * Math.PI) / 180;
+  const Δλ = ((lon2 - lon1) * Math.PI) / 180;
+
+  const a =
+    Math.sin(Δφ / 2) ** 2 + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) ** 2;
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+  return Math.ceil(R * c);
+};
 
 const SelectRide = () => {
   const router = useRouter();
@@ -18,97 +66,30 @@ const SelectRide = () => {
     if (typeof window !== "undefined") {
       const pickLoc = JSON.parse(localStorage.getItem("pickLocCoordinates"));
       const dropLoc = JSON.parse(localStorage.getItem("dropLocCoordinates"));
-      const pickLocStr = localStorage.getItem("pickLocation");
-      const dropLocStr = localStorage.getItem("dropLocation");
-
-      if (pickLoc && dropLoc && pickLocStr && dropLocStr) {
-        setPickLoc(pickLocStr);
-        setDropLoc(dropLocStr);
-        setPickCoordinates(pickLoc);
-        setDropCoordinates(dropLoc);
-      }
+      setPickLoc(localStorage.getItem("pickLocation"));
+      setDropLoc(localStorage.getItem("dropLocation"));
+      setPickCoordinates(pickLoc);
+      setDropCoordinates(dropLoc);
     }
   }, []);
 
   useEffect(() => {
-    const socket = io("http://localhost:5000", {
-      withCredentials: true,
-    });
+    const socket = io("http://localhost:5000", { withCredentials: true });
 
-    const handleRideAccepted = ({ driverId }) => {
-      console.log(`Ride accepted by Driver ${driverId}`);
+    socket.on("ride_accepted", ({ driverId }) => {
       toast.success(`Ride accepted by Driver ${driverId}`);
       router.push("/eta");
-    };
+    });
 
-    socket.on("ride_accepted", handleRideAccepted);
-
-    socket.on("connect_error", (error) => {
-      console.error("WebSocket connection error:", error);
+    socket.on("connect_error", () => {
       toast.error("Failed to connect to the server");
     });
 
-    return () => {
-      socket.off("ride_accepted", handleRideAccepted);
-      socket.disconnect();
-    };
-  }, []);
+    return () => socket.disconnect();
+  }, [router]);
 
-  const Haversine = (lat1, lon1, lat2, lon2) => {
-    const R = 6371e3;
-    const phi_1 = (lat1 * Math.PI) / 180;
-    const phi_2 = (lat2 * Math.PI) / 180;
-    const diff_phi = ((lat2 - lat1) * Math.PI) / 180;
-    const diff_lambda = ((lon2 - lon1) * Math.PI) / 180;
-
-    const a =
-      Math.sin(diff_phi / 2) * Math.sin(diff_phi / 2) +
-      Math.cos(phi_1) *
-        Math.cos(phi_2) *
-        Math.sin(diff_lambda / 2) *
-        Math.sin(diff_lambda / 2);
-
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-    return Math.ceil(R * c);
-  };
-
-  const pricing = [
-    { baseFare: 50, perKm: 15, perMin: 2, serviceFee: 10 },
-    { baseFare: 30, perKm: 12, perMin: 1.5, serviceFee: 8 },
-    { baseFare: 20, perKm: 10, perMin: 1, serviceFee: 5 },
-    { baseFare: 15, perKm: 8, perMin: 0.8, serviceFee: 3 },
-  ];
-
-  const rides = [
-    {
-      name: "Premium Cab",
-      desc: "Luxury vehicles with top drivers",
-      icon: <Car />,
-      speed: 13.888,
-    },
-    {
-      name: "Standard Cab",
-      desc: "Comfortable rides up to 4",
-      icon: <Car />,
-      speed: 13.888,
-    },
-    {
-      name: "Auto",
-      desc: "Affordable rides up to 3 people",
-      icon: <Compass />,
-      speed: 8.333,
-    },
-    {
-      name: "Bike",
-      desc: "Quick rides for single passenger",
-      icon: <Bike />,
-      speed: 11.11,
-    },
-  ];
-
-  const distance =
-    pickCoordinates && dropCoordinates
+  const distance = useMemo(() => {
+    return pickCoordinates && dropCoordinates
       ? Haversine(
           pickCoordinates[0],
           pickCoordinates[1],
@@ -116,58 +97,51 @@ const SelectRide = () => {
           dropCoordinates[1]
         )
       : null;
+  }, [pickCoordinates, dropCoordinates]);
 
-  const estimatedTime = (rideSpeed) => {
-    if (!distance || !rideSpeed) return null;
-    return Math.ceil(distance / (rideSpeed * 60));
-  };
+  const estimatedTime = (speed) =>
+    distance ? Math.ceil(distance / (speed * 60)) : null;
 
-  const estimatedPrice = (selected) => {
+  const estimatedPrice = useMemo(() => {
     if (!distance) return null;
-    const { baseFare, perKm, serviceFee } = pricing[selected];
-    const distanceKm = distance / 1000;
-    return baseFare + perKm * Math.ceil(distanceKm) + serviceFee;
-  };
+    const { baseFare, perKm, serviceFee } = PRICING[selected];
+    return baseFare + perKm * Math.ceil(distance / 1000) + serviceFee;
+  }, [selected, distance]);
 
   const sendBookingRequest = () => {
-    if (!pickCoordinates || !dropCoordinates) {
-      return;
-    }
-    const price = estimatedPrice(selected);
-    const bookingData = {
+    if (!pickCoordinates || !dropCoordinates) return;
+
+    localStorage.setItem("ridePrice", JSON.stringify(estimatedPrice));
+
+    const socket = io("http://localhost:5000");
+    socket.emit("book_request", {
       rideType: selected,
       pickLoc,
       dropLoc,
       pickCoordinates,
       dropCoordinates,
-      price: estimatedPrice(selected),
-      booking_date: new Date().toISOString(), // Use a consistent format
-    };
-
-    localStorage.setItem("ridePrice", JSON.stringify(price));
-
-    console.log("Sending booking request");
-    const socket = io("http://localhost:5000");
-    socket.emit("book_request", bookingData);
+      price: estimatedPrice,
+      booking_date: new Date().toISOString(),
+    });
   };
 
   return (
-    <div className="w-full max-w-2xl mx-auto mt-10 p-6 rounded-lg md:shadow-xl md:border md:border-neutral-200 bg-white sm:p-8">
+    <div className="w-full max-w-2xl mx-auto mt-10 p-6 rounded-lg md:shadow-xl md:border border-neutral-200 bg-white sm:p-8">
       <div className="mb-6 text-center">
         <h1 className="text-2xl font-semibold">Select Ride Type</h1>
         <p className="text-neutral-600">Choose the type of ride you want</p>
       </div>
 
       <div className="grid grid-cols-1 gap-4">
-        {rides.map((ride, index) => (
+        {RIDES.map((ride, index) => (
           <div
             key={index}
             onClick={() => setSelected(index)}
-            className={`${
+            className={`cursor-pointer flex flex-col sm:flex-row items-center justify-between p-4 rounded-lg hover:shadow-md transition-shadow ${
               index === selected
                 ? "border-black border-2"
                 : "border-neutral-300"
-            } cursor-pointer flex flex-col sm:flex-row items-center justify-between p-4 rounded-lg hover:shadow-md transition-shadow`}
+            }`}
           >
             <div className="flex items-center gap-4">
               <div className="w-8 h-8 text-gray-600">{ride.icon}</div>
@@ -189,7 +163,7 @@ const SelectRide = () => {
             <h3 className="text-lg font-medium">Estimated Price</h3>
             {distance && (
               <h2 className="font-medium text-xl text-gray-800">
-                ₹{estimatedPrice(selected)}
+                ₹{estimatedPrice}
               </h2>
             )}
           </div>
