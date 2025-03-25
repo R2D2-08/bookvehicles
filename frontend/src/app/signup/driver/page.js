@@ -11,6 +11,7 @@ function DriverSignup() {
     phone: "",
     password: "",
     licenseNumber: "",
+    photo_url: ""
   });
 
   const handleChange = (e) => {
@@ -20,22 +21,35 @@ function DriverSignup() {
     });
   };
 
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file){
+        setDriver({
+        ...driver,
+        photo: file,
+        photoPreview: URL.createObjectURL(file),
+        });
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     try {
-      const response = await fetch("<api>", {
+      const formData = new FormData();
+      formData.append("name", driver.username);
+      formData.append("email", driver.email);
+      formData.append("password", driver.password);
+      formData.append("phone_no", driver.phone_no);
+      formData.append("licenseNumber", driver.licenseNumber);
+      if (driver.photo_url) {
+        formData.append("photo", driver.photo_url);
+      }
+
+      const response = await fetch("http://localhost:5000/api/users/register", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name: driver.name,
-          email: driver.email,
-          phone: driver.phone,
-          password: driver.password,
-          licenseNumber: driver.licenseNumber,
-        }),
+        body: formData,
+        credentials: "include",
       });
 
       if (!response.ok) {
@@ -45,8 +59,8 @@ function DriverSignup() {
       const data = await response.json();
       localStorage.setItem("AccessToken", data.access);
       localStorage.setItem("RefreshToken", data.refresh);
-
-      router.push("/");
+      alert("Registration successful!");
+      router.push("/login");
     } catch (error) {
       console.error("Error during signup:", error);
     }
@@ -124,9 +138,34 @@ function DriverSignup() {
               />
             </div>
 
+            {/* Image Upload Section */}
+            <div className="py-1">
+              <label htmlFor="photo" className="mb-2 text-md items-center">Upload Photo</label>
+              <input
+                type="file"
+                name="photo"
+                id="photo"
+                accept="image/*"
+                onChange={handleImageChange}
+                className="w-full p-2 border border-gray-300 rounded-md"
+              />
+            </div>
+
+            {/* Image Preview */}
+            {driver.photoPreview && (
+              <div className="mt-3 flex flex-col items-center">
+                <p className="text-gray-600">Preview:</p>
+                <img
+                  src={driver.photoPreview}
+                  alt="Driver Preview"
+                  className="w-32 h-32 rounded-lg border border-gray-300 mt-2"
+                />
+              </div>
+            )}
+
             <button
               type="submit"
-              className="w-full bg-black text-white p-2 rounded-lg mt-3 hover:bg-white hover:text-black border hover:border-gray-300 transition"
+              className="w-full bg-black text-white p-2 rounded-lg mt-3 hover:bg-white hover:text-black border hover:border-gray-300 transition delay-30 ease-in"
             >
               Sign up
             </button>
