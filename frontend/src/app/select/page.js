@@ -32,13 +32,11 @@ const SelectRide = () => {
 
   useEffect(() => {
     const socket = io("http://localhost:5000", {
-      reconnection: true,
-      reconnectionAttempts: 5,
-      reconnectionDelay: 1000,
       withCredentials: true,
     });
 
     const handleRideAccepted = ({ driverId }) => {
+      console.log(`Ride accepted by Driver ${driverId}`);
       toast.success(`Ride accepted by Driver ${driverId}`);
       router.push("/eta");
     };
