@@ -32,12 +32,11 @@ const SelectRide = () => {
 
   useEffect(() => {
     const socket = io("http://localhost:5000", {
-      reconnection: true,
-      reconnectionAttempts: 5,
-      reconnectionDelay: 1000,
+      withCredentials: true,
     });
 
     const handleRideAccepted = ({ driverId }) => {
+      console.log(`Ride accepted by Driver ${driverId}`);
       toast.success(`Ride accepted by Driver ${driverId}`);
       router.push("/eta");
     };
@@ -134,7 +133,7 @@ const SelectRide = () => {
     if (!pickCoordinates || !dropCoordinates) {
       return;
     }
-
+    const price = estimatedPrice(selected);
     const bookingData = {
       rideType: selected,
       pickLoc,
@@ -144,6 +143,8 @@ const SelectRide = () => {
       price: estimatedPrice(selected),
       booking_date: new Date().toISOString(), // Use a consistent format
     };
+
+    localStorage.setItem("ridePrice", JSON.stringify(price));
 
     console.log("Sending booking request");
     const socket = io("http://localhost:5000");

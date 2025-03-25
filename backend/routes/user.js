@@ -11,8 +11,9 @@ const path = require("path");
 const fs = require("fs");
 const { serialize } = require("v8");
 const { doesNotMatch } = require("assert");
-const { authenticate } = require("../middleware/auth");
+const { authenticate, authorize } = require("../middleware/auth");
 const { decode } = require("punycode");
+const { where } = require("sequelize");
 const uploadDir = path.join(__dirname, "../uploads");
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
@@ -172,9 +173,23 @@ router.post("/refresh", (req, res) => {
   });
 });
 
-router.get("/", async (req, res) => {
+router.get(
+  "/passengers",
+  authenticate,
+  authorize(["admin"]),
+  async (req, res) => {
+    try {
+      const users = await User.findAll({ where: { role: "user" } });
+      res.json(users);
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  }
+);
+
+router.get("/drivers", authenticate, authorize(["admin"]), async (req, res) => {
   try {
-    const users = await User.findAll();
+    const users = await User.findAll({ where: { role: "driver" } });
     res.json(users);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -203,7 +218,9 @@ router.get("/check-auth", async (req, res) => {
         maxAge: 15 * 60 * 1000,
       });
       console.log("New Access Token:", newAccessToken);
-      return res.status(200).json({ isAuthenticated: true });
+      
+      const decoded = jwt.verify(newAccessToken, process.env.JWT_SECRET);
+      return res.status(200).json({ isAuthenticated: true, role: decoded.role});
     } catch (err) {
       return res
         .status(401)
@@ -214,7 +231,7 @@ router.get("/check-auth", async (req, res) => {
   try {
     const decoded = jwt.verify(accessToken, process.env.JWT_SECRET);
     console.log(decoded);
-    return res.status(200).json({ isAuthenticated: true });
+    return res.status(200).json({ isAuthenticated: true, role: decoded.role });
   } catch (error) {
     if (error.name === "TokenExpiredError" && req.cookies.refreshToken) {
       try {
@@ -228,7 +245,8 @@ router.get("/check-auth", async (req, res) => {
           ...cookieOptions,
           maxAge: 15 * 60 * 1000,
         });
-        return res.status(200).json({ isAuthenticated: true });
+        const decoded = jwt.verify(newAccessToken, process.env.JWT_SECRET);
+        return res.status(200).json({ isAuthenticated: true, role: decoded.role });
       } catch (err) {
         return res
           .status(401)

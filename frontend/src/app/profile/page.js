@@ -40,7 +40,6 @@ const UserProfile = () => {
         }
         const data = await response.json();
         setUser(data);
-        console.log(data);
         setLoading(false);
       } catch (error) {
         console.error(error);
@@ -65,20 +64,20 @@ const UserProfile = () => {
           <div className="flex flex-col items-center md:items-start space-y-6">
             <div className="relative w-48 h-48 rounded-full overflow-hidden border-4 border-white shadow-2xl">
               <Image
-                src="/images/profile_photo.jfif"
+                src={user.user?.photo_url ? `http://localhost:5000${user.user?.photo_url}` : "/images/profile_photo.jfif"}
                 alt="User Profile"
                 layout="fill"
                 objectFit="cover"
               />
             </div>
             <h1 className="text-4xl font-bold flex items-center gap-3">
-              <User size={32} /> {user.user?.name ?? "User"}
+              <User size={32} /> {user.user?.name}
             </h1>
             <p className="text-lg flex items-center gap-3">
-              <Mail size={20} /> {user.user?.email ?? "Email"}
+              <Mail size={20} /> {user.user?.email}
             </p>
             <p className="text-lg flex items-center gap-3">
-              <Phone size={20} /> {user.user?.phone_no ?? "Phone Number"}
+              <Phone size={20} /> {user.user?.phone_no}
             </p>
             <p className="text-lg flex items-center gap-3">
               <Briefcase size={20} /> Gold Member

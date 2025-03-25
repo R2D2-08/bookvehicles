@@ -1,10 +1,12 @@
 "use client";
 import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 
 export default function LiveETA() {
-  const arrivalTime = 180; // 3 minutes in seconds
-  const journeyTime = 300; // 5 minutes in seconds
+  const router = useRouter();
+  const arrivalTime = 180;
+  const journeyTime = 10;
 
   const [timeLeft, setTimeLeft] = useState(arrivalTime);
   const [journeyStarted, setJourneyStarted] = useState(true);
@@ -30,6 +32,7 @@ export default function LiveETA() {
         setJourneyTimeLeft((prev) => {
           if (prev <= 1) {
             clearInterval(journeyInterval);
+            router.push("/pay");
             return 0;
           }
           return prev - 1;
@@ -37,7 +40,7 @@ export default function LiveETA() {
       }, 1000);
       return () => clearInterval(journeyInterval);
     }
-  }, [journeyStarted]);
+  }, [journeyStarted, router]);
 
   const progress = ((arrivalTime - timeLeft) / arrivalTime) * 100;
   const journeyProgress = ((journeyTime - journeyTimeLeft) / journeyTime) * 100;
@@ -49,19 +52,7 @@ export default function LiveETA() {
   };
 
   if (journeyStarted && journeyTimeLeft === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-white text-gray-900">
-        <motion.div
-          className="bg-gray-100 p-6 rounded-lg shadow-lg text-center"
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5 }}
-        >
-          <h1 className="text-3xl font-bold">You&apos;ve arrived! 🎉</h1>
-          <p className="text-lg text-gray-600 mt-2">Thank you for riding with us.</p>
-        </motion.div>
-      </div>
-    );
+    return null;
   }
 
   if (journeyStarted) {

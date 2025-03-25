@@ -1,4 +1,5 @@
 "use client";
+import io from "socket.io-client";
 import React, { useState, useEffect } from "react";
 import UserProfile from "../profile/page.js";
 import Image from "next/image";
@@ -13,7 +14,6 @@ import {
   Phone,
   UserCircle,
 } from "lucide-react";
-import { io } from "socket.io-client";
 
 import dynamic from "next/dynamic";
 import "leaflet/dist/leaflet.css"; // Import Leaflet styles globally
@@ -37,10 +37,22 @@ const Popup = dynamic(() => import("react-leaflet").then((mod) => mod.Popup), {
 
 const DriverDashboard = () => {
   const [isClient, setIsClient] = useState(false);
+  const [socket, setSocket] = useState(
+    io("http://localhost:5000", {
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
+      withCredentials: true,
+    })
+  );
   useEffect(() => {
     setIsClient(true);
-    setIsClient(true);
-    const socket = io("http://localhost:5000");
+    const socket = io("http://localhost:5000", {
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
+      withCredentials: true,
+    });
 
     socket.on("connect", () => {
       console.log("Connected to server");
@@ -49,19 +61,21 @@ const DriverDashboard = () => {
 
     const handleNewRideRequest = ({ requestId, data }) => {
       console.log(`New ride request ${requestId}`);
-      setRideRequests(rideRequests => [...rideRequests, {
-        id: 4,
-        name: "randomUser",
-        phone: "456",
-        pickup: data.pickLoc,
-        dropoff: data.dropLoc,
-        fare: data.price,
-        time: `${Math.floor((Date.now() - data.booking_date)/60)} mins ago`
-      }])
+      setRideRequests((rideRequests) => [
+        ...rideRequests,
+        {
+          id: requestId,
+          name: "randomUser",
+          phone: "456",
+          pickup: data.pickLoc,
+          dropoff: data.dropLoc,
+          fare: data.price,
+          time: `${Math.floor((Date.now() - data.booking_date) / 60)} mins ago`,
+        },
+      ]);
     };
 
     socket.on("new_ride_request", handleNewRideRequest);
-
 
     return () => {
       socket.off("new_ride_request", handleNewRideRequest);
@@ -70,31 +84,43 @@ const DriverDashboard = () => {
   }, []);
   const [activeTab, setActiveTab] = useState("profile");
   const [isAvailable, setIsAvailable] = useState(true);
-  const [rideRequests, setRideRequests] = useState([
-    {
-      id: 1,
-      name: "John Doe",
-      phone: "+123456789",
-      pickup: [40.7128, -74.006],
-      dropoff: "Airport",
-      fare: "$25",
-      time: "2 mins ago",
-    },
-    {
-      id: 2,
-      name: "Jane Smith",
-      phone: "+987654321",
-      pickup: [40.758, -73.9855],
-      dropoff: "Train Station",
-      fare: "$15",
-      time: "5 mins ago",
-    },
-  ]);
+  const [rideRequests, setRideRequests] = useState([]);
   const [activeRide, setActiveRide] = useState(null);
 
+  let locationInterval;
+
   const handleAccept = (id) => {
-    setActiveRide(rideRequests.find((req) => req.id === id));
-    setRideRequests([]);
+    const acceptedRide = rideRequests.find((req) => req.id === id);
+
+    if (acceptedRide) {
+      setActiveRide(acceptedRide);
+      setRideRequests([]);
+
+      // Emit ride acceptance
+      socket.emit("accept_ride", {
+        requestId: acceptedRide.id,
+        pickupLocation: acceptedRide.pickupLocation,
+        dropoffLocation: acceptedRide.dropoffLocation,
+      });
+
+      // Start sending live location
+      // locationInterval = setInterval(() => {
+      //   navigator.geolocation.getCurrentPosition(
+      //     (position) => {
+      //       const { latitude, longitude } = position.coords;
+      //       socket.emit("driverLocation", {
+      //         driverId: driver.id,
+      //         rideId: acceptedRide.id,
+      //         latitude,
+      //         longitude,
+      //       });
+      //     },
+      //     (error) => {
+      //       console.error("Error getting location:", error);
+      //     }
+      //   );
+      // }, 5000); // Send location every 5 seconds
+    }
   };
 
   const handleReject = (id) => {
@@ -111,18 +137,18 @@ const DriverDashboard = () => {
   const [review, setReview] = useState("");
 
   const notifyPassenger = () => {
-    setRideOngoing(true); 
+    setRideOngoing(true);
   };
 
   const endJourney = () => {
-    setShowReviewModal(true); 
+    setShowReviewModal(true);
   };
 
   const submitReview = () => {
     setShowReviewModal(false);
-    setActiveRide(null); 
-    setRideOngoing(false); 
-    setActiveTab("notifications"); 
+    setActiveRide(null);
+    setRideOngoing(false);
+    setActiveTab("notifications");
   };
 
   return (
@@ -199,7 +225,7 @@ const DriverDashboard = () => {
                   className="p-4 bg-gray-100 rounded-xl shadow flex flex-col gap-2"
                 >
                   <p className="text-gray-800 font-semibold">
-                    <strong>Pickup:</strong> {request.pickup} {" "}
+                    <strong>Pickup:</strong> {request.pickup}{" "}
                     <strong>Drop-off:</strong> {request.dropoff}
                   </p>
                   <p className="text-gray-600 font-medium">
