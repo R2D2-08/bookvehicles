@@ -31,13 +31,11 @@ function AdminDashboard() {
   useEffect(() => {
     async function fetchStats() {
       try {
-        // Simulating API call with dummy data
-        const data = {
-          drivers: 120,
-          users: 450,
-          rides: 3000,
-          revenue: 50000,
-        };
+        const response = await fetch("http://localhost:5000/api/users/stats", {
+          credentials: "include", // Include cookies if authentication is needed
+        });
+        if (!response.ok) throw new Error("Failed to fetch stats");
+        const data = await response.json();
         setStats(data);
       } catch (error) {
         console.error("Error fetching stats:", error);
@@ -45,34 +43,32 @@ function AdminDashboard() {
     }
     fetchStats();
   }, []);
-
+  
   useEffect(() => {
+    async function fetchData(endpoint, setter) {
+      try {
+        const response = await fetch(`http://localhost:5000/api/users/${endpoint}`, {
+          credentials: "include",
+        });
+        if (!response.ok) throw new Error(`Failed to fetch ${endpoint}`);
+        const data = await response.json();
+        setter(data);
+      } catch (error) {
+        console.error(`Error fetching ${endpoint}:`, error);
+      }
+    }
+  
     if (view === "drivers") {
-      setDrivers([
-        { id: 1, name: "John Doe", car: "Toyota Prius" },
-        { id: 2, name: "Jane Smith", car: "Honda Civic" },
-        { id: 3, name: "Mike Johnson", car: "Ford Focus" },
-      ]);
+      fetchData("drivers", setDrivers);
     } else if (view === "passengers") {
-      setPassengers([
-        { id: 1, name: "Alice Johnson", rides: 25 },
-        { id: 2, name: "Bob Brown", rides: 12 },
-        { id: 3, name: "Cathy Lee", rides: 30 },
-      ]);
+      fetchData("passengers", setPassengers);
     } else if (view === "rides") {
-      setRides([
-        { id: 1, driver: "John Doe", passenger: "Alice Johnson", start: "Downtown", destination: "Airport", fare: 25 },
-        { id: 2, driver: "Jane Smith", passenger: "Bob Brown", start: "Uptown", destination: "Mall", fare: 15 },
-        { id: 3, driver: "Mike Johnson", passenger: "Cathy Lee", start: "City Center", destination: "Stadium", fare: 20 },
-      ]);
+      fetchData("rides", setRides);
     } else if (view === "payments") {
-      setPayments([
-        { id: 1, driver: "John Doe", amount: 100, date: "2025-03-15", status: "Completed" },
-        { id: 2, driver: "Jane Smith", amount: 150, date: "2025-03-14", status: "Pending" },
-        { id: 3, driver: "Mike Johnson", amount: 120, date: "2025-03-13", status: "Completed" },
-      ]);
+      fetchData("payments", setPayments);
     }
   }, [view]);
+  
 
   const handleLogout = () => {
     localStorage.removeItem("AccessToken");
@@ -200,57 +196,94 @@ function AdminDashboard() {
 
         {view === "drivers" && (
           <div>
-            <h2 className="text-2xl font-bold mb-6">Drivers</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {drivers.map((driver) => (
-                <div
-                  key={driver.id}
-                  className="bg-gray-800 p-6 rounded-lg shadow-lg hover:shadow-xl transition-shadow"
-                >
-                  <h3 className="text-xl font-bold">{driver.name}</h3>
-                  <p className="text-gray-400">Car: {driver.car}</p>
-                </div>
-              ))}
-            </div>
+  <h2 className="text-2xl font-bold mb-6">Drivers</h2>
+  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+    {drivers.map((driver) => (
+      <div
+        key={driver.id}
+        className="bg-gray-800 p-6 rounded-lg shadow-lg hover:shadow-xl transition-shadow"
+      >
+        <div className="flex items-center gap-4">
+          <img
+            src={driver.photo_url}
+            alt={driver.name}
+            className="w-12 h-12 rounded-full object-cover border-2 border-gray-600"
+          />
+          <div>
+            <h3 className="text-xl font-bold">{driver.name}</h3>
+            <p className="text-gray-400">Role: {driver.role}</p>
           </div>
+        </div>
+        <div className="mt-4 text-gray-300">
+          <p>📞 Phone No: {driver.phone_no}</p>
+          <p>✉️ Email Address: {driver.email}</p>
+          <p>⭐ Rating: {driver.rating ?? "N/A"}</p>
+          <p>Joined: {new Date(driver.createdAt).toLocaleDateString()}</p>
+        </div>
+      </div>
+    ))}
+  </div>
+</div>
+
         )}
 
         {view === "passengers" && (
           <div>
-            <h2 className="text-2xl font-bold mb-6">Passengers</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {passengers.map((passenger) => (
-                <div
-                  key={passenger.id}
-                  className="bg-gray-800 p-6 rounded-lg shadow-lg hover:shadow-xl transition-shadow"
-                >
-                  <h3 className="text-xl font-bold">{passenger.name}</h3>
-                  <p className="text-gray-400">Rides: {passenger.rides}</p>
-                </div>
-              ))}
-            </div>
+  <h2 className="text-2xl font-bold mb-6">Passengers</h2>
+  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+    {passengers.map((passenger) => (
+      <div
+        key={passenger.id}
+        className="bg-gray-800 p-6 rounded-lg shadow-lg hover:shadow-xl transition-shadow"
+      >
+        <div className="flex items-center gap-4">
+          <img
+            src={passenger.photo_url}
+            alt={passenger.name}
+            className="w-12 h-12 rounded-full object-cover border-2 border-gray-600"
+          />
+          <div>
+            <h3 className="text-xl font-bold">{passenger.name}</h3>
+            <p className="text-gray-400">Role: {passenger.role}</p>
           </div>
+        </div>
+        <div className="mt-4 text-gray-300">
+          <p>📞 Phone No.: {passenger.phone_no}</p>
+          <p>✉️ Email Address: {passenger.email}</p>
+          <p>⭐ Rating: {passenger.rating ?? "N/A"}</p>
+          <p>Joined: {new Date(passenger.createdAt).toLocaleDateString()}</p>
+        </div>
+      </div>
+    ))}
+  </div>
+</div>
+
         )}
 
         {view === "rides" && (
           <div>
-            <h2 className="text-2xl font-bold mb-6">Rides</h2>
-            <div className="grid grid-cols-1 gap-4">
-              {rides.map((ride) => (
-                <div
-                  key={ride.id}
-                  className="bg-gray-800 p-6 rounded-lg shadow-lg hover:shadow-xl transition-shadow"
-                >
-                  <h3 className="text-xl font-bold">Ride {ride.id}</h3>
-                  <p className="text-gray-400">Driver: {ride.driver}</p>
-                  <p className="text-gray-400">Passenger: {ride.passenger}</p>
-                  <p className="text-gray-400">From: {ride.start}</p>
-                  <p className="text-gray-400">To: {ride.destination}</p>
-                  <p className="text-gray-400">Fare: ${ride.fare}</p>
-                </div>
-              ))}
-            </div>
-          </div>
+  <h2 className="text-2xl font-bold mb-6">Rides</h2>
+  <div className="grid grid-cols-1 gap-4">
+    {rides.map((ride) => (
+      <div
+        key={ride.ride_id}
+        className="bg-gray-800 p-6 rounded-lg shadow-lg hover:shadow-xl transition-shadow"
+      >
+        <h3 className="text-xl font-bold">Ride {ride.ride_id}</h3>
+        <p className="text-gray-400">Driver: {ride.driver_id}</p>
+        <p className="text-gray-400">Passenger: {ride.passenger_id}</p>
+        <p className="text-gray-400">
+          From: {ride.startLocation?.address || "Unknown"}
+        </p>
+        <p className="text-gray-400">
+          To: {ride.endLocation?.address || "Unknown"}
+        </p>
+        <p className="text-gray-400">Fare: ${ride.fare}</p>
+      </div>
+    ))}
+  </div>
+</div>
+
         )}
 
         {view === "payments" && (
@@ -259,14 +292,12 @@ function AdminDashboard() {
             <div className="grid grid-cols-1 gap-4">
               {payments.map((payment) => (
                 <div
-                  key={payment.id}
+                  key={payment.transaction_id}
                   className="bg-gray-800 p-6 rounded-lg shadow-lg hover:shadow-xl transition-shadow"
                 >
-                  <h3 className="text-xl font-bold">Payment {payment.id}</h3>
-                  <p className="text-gray-400">Driver: {payment.driver}</p>
+                  <h3 className="text-xl font-bold">Payment {payment.transaction_id}</h3>
                   <p className="text-gray-400">Amount: ${payment.amount}</p>
-                  <p className="text-gray-400">Date: {payment.date}</p>
-                  <p className="text-gray-400">Status: {payment.status}</p>
+                  <p className="text-gray-400">Status: {payment.payment_status}</p>
                 </div>
               ))}
             </div>

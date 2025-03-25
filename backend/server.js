@@ -15,6 +15,7 @@ const Location = require("./models/Locations");
 const app = express();
 const server = http.createServer(app);
 const { Server } = require("socket.io");
+const adminRoutes = require("./routes/user");
 
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 const io = new Server(server, {
@@ -33,6 +34,7 @@ app.use(morgan("dev"));
 app.use(cookieParser());
 app.use(express.json());
 app.use("/api", routes);
+app.use("/admin", adminRoutes);
 
 const PORT = process.env.PORT || 5000;
 
