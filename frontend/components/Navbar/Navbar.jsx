@@ -1,8 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState, useContext } from "react";
 import { Menu, X } from "lucide-react";
-import { useContext } from "react";
 import { UserContext } from "@/services/context";
 import Link from "next/link";
 
@@ -24,6 +23,7 @@ const NavButton = ({ onClick, children }) => (
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const { user_details, set_user } = useContext(UserContext);
+  const [user, setUser] = useState("");
 
   const links = [
     { href: "/", label: "Ride" },
@@ -33,17 +33,28 @@ export default function Navbar() {
   ];
 
   const handleLogout = () => {
-    set_user(null); 
+    set_user(null);
+    localStorage.removeItem("user");
+    setUser("");
   };
 
+  useEffect(() => {
+    const userName = localStorage.getItem("user");
+    console.log("Username: ", userName);
+    if (userName) {
+      setUser(userName);
+    }
+  });
+
   return (
-    <nav className="bg-black text-white px-6 py-4 z-10 flex items-center justify-between">
+    <nav className="bg-black text-white px-6 py-4 z-10 flex items-center justify-between relative">
       <div className="text-2xl font-bold">RideBook</div>
 
+      {/* Desktop Navigation */}
       <div className="hidden md:flex items-center space-x-6">
-        {user_details ? (
+        {user.length > 0 ? (
           <>
-            <p>{user_details.name}</p>
+            <p>{user}</p>
             <NavButton onClick={handleLogout}>Log out</NavButton>
           </>
         ) : (
@@ -60,21 +71,31 @@ export default function Navbar() {
         )}
       </div>
 
+      {/* Mobile Menu Button */}
       <button className="md:hidden" onClick={() => setIsOpen(!isOpen)}>
         {isOpen ? <X size={28} /> : <Menu size={28} />}
       </button>
 
-
+      {/* Mobile Dropdown Menu */}
       {isOpen && (
-        <div className="absolute top-16 z-10 left-0 w-full bg-black text-white flex flex-col items-center space-y-4 py-6 md:hidden">
-          {links.map((link) => (
-            <NavLink key={link.label} href={link.href}>
-              {link.label}
-            </NavLink>
-          ))}
-          <NavButton onClick={() => (window.location.href = "/login")}>
-            Log in
-          </NavButton>
+        <div className="absolute top-16 left-0 w-full bg-black text-white flex flex-col items-center space-y-4 py-6 md:hidden">
+          {user.length > 0 ? (
+            <>
+              <p>{user}</p>
+              <NavButton onClick={handleLogout}>Log out</NavButton>
+            </>
+          ) : (
+            <>
+              {links.map((link) => (
+                <NavLink key={link.label} href={link.href}>
+                  {link.label}
+                </NavLink>
+              ))}
+              <NavButton onClick={() => (window.location.href = "/login")}>
+                Log in
+              </NavButton>
+            </>
+          )}
         </div>
       )}
     </nav>

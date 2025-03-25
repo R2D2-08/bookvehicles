@@ -37,32 +37,41 @@ const Popup = dynamic(() => import("react-leaflet").then((mod) => mod.Popup), {
 
 const DriverDashboard = () => {
   const [isClient, setIsClient] = useState(false);
-  const [socket, setSocket] = useState(
-    io("http://localhost:5000", {
-      reconnection: true,
-      reconnectionAttempts: 5,
-      reconnectionDelay: 1000,
-      withCredentials: true,
-    })
-  );
+  const [rideRequests, setRideRequests] = useState([]);
+  const [socket, setSocket] = useState(null);
+  const [driverId, setDriverId] = useState(null);
   useEffect(() => {
     setIsClient(true);
-    const socket = io("http://localhost:5000", {
+
+    fetch("http://localhost:5000/api/users/id", {
+      method: "GET",
+      credentials: "include",
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        setDriverId(data.id);
+        console.log("Driver ID:", driverId);
+      })
+      .catch((err) => console.error("Error fetching driver ID:", err));
+
+    const newSocket = io("http://localhost:5000", {
       reconnection: true,
       reconnectionAttempts: 5,
       reconnectionDelay: 1000,
       withCredentials: true,
     });
 
-    socket.on("connect", () => {
+    setSocket(newSocket);
+
+    newSocket.on("connect", () => {
       console.log("Connected to server");
-      socket.emit("driver_register");
+      newSocket.emit("driver_register");
     });
 
     const handleNewRideRequest = ({ requestId, data }) => {
       console.log(`New ride request ${requestId}`);
-      setRideRequests((rideRequests) => [
-        ...rideRequests,
+      setRideRequests((prev) => [
+        ...prev,
         {
           id: requestId,
           name: "randomUser",
@@ -75,16 +84,16 @@ const DriverDashboard = () => {
       ]);
     };
 
-    socket.on("new_ride_request", handleNewRideRequest);
+    newSocket.on("new_ride_request", handleNewRideRequest);
 
     return () => {
-      socket.off("new_ride_request", handleNewRideRequest);
-      socket.disconnect();
+      newSocket.off("new_ride_request", handleNewRideRequest);
+      newSocket.disconnect();
     };
   }, []);
+
   const [activeTab, setActiveTab] = useState("profile");
   const [isAvailable, setIsAvailable] = useState(true);
-  const [rideRequests, setRideRequests] = useState([]);
   const [activeRide, setActiveRide] = useState(null);
 
   let locationInterval;
@@ -98,6 +107,7 @@ const DriverDashboard = () => {
 
       // Emit ride acceptance
       socket.emit("accept_ride", {
+        driverId: driverId,
         requestId: acceptedRide.id,
         pickupLocation: acceptedRide.pickupLocation,
         dropoffLocation: acceptedRide.dropoffLocation,

@@ -56,7 +56,7 @@ router.post("/register", upload.single("profileImage"), async (req, res) => {
   try {
     const { name, email, password, phone_no, role, license_no, vehicle } =
       req.body;
-    console.log(req.body, 'checking out router.post(/register)');
+    console.log(req.body, "checking out router.post(/register)");
 
     const existingUser = await User.findOne({ where: { email } });
     if (existingUser)
@@ -218,9 +218,11 @@ router.get("/check-auth", async (req, res) => {
         maxAge: 15 * 60 * 1000,
       });
       console.log("New Access Token:", newAccessToken);
-      
+
       const decoded = jwt.verify(newAccessToken, process.env.JWT_SECRET);
-      return res.status(200).json({ isAuthenticated: true, role: decoded.role});
+      return res
+        .status(200)
+        .json({ isAuthenticated: true, role: decoded.role });
     } catch (err) {
       return res
         .status(401)
@@ -246,7 +248,9 @@ router.get("/check-auth", async (req, res) => {
           maxAge: 15 * 60 * 1000,
         });
         const decoded = jwt.verify(newAccessToken, process.env.JWT_SECRET);
-        return res.status(200).json({ isAuthenticated: true, role: decoded.role });
+        return res
+          .status(200)
+          .json({ isAuthenticated: true, role: decoded.role });
       } catch (err) {
         return res
           .status(401)
@@ -342,6 +346,16 @@ router.get("/profile", authenticate, async (req, res) => {
       });
       return res.status(200).json({ user, passenger });
     }
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err });
+  }
+});
+
+router.get("/id", authenticate, async (req, res) => {
+  try {
+    console.log(req.user || req.cookies);
+    return res.status(200).json({ id: req.user.id });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: err });

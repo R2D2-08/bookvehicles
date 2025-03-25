@@ -46,7 +46,15 @@ const Ride = sequelize.define(
       },
     },
     status: {
-      type: DataTypes.ENUM("pending", "accepted", "started", "completed"),
+      type: DataTypes.ENUM(
+        "pending",
+        "accepted",
+        "started",
+        "completed",
+        "cancelled",
+        "rejected",
+        "sos"
+      ),
       defaultValue: "pending",
       allowNull: false,
     },

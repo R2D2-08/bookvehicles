@@ -15,6 +15,7 @@ const app = express();
 const server = http.createServer(app);
 const { Server } = require("socket.io");
 
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 const io = new Server(server, {
   cors: { origin: "http://localhost:3000", credentials: true },
 });
@@ -26,11 +27,9 @@ app.use(
 );
 
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
-
 app.use(cors({ origin: "http://localhost:3000", credentials: true }));
 app.use(morgan("dev"));
 app.use(cookieParser());
-
 app.use(express.json());
 app.use("/api", routes);
 
@@ -43,14 +42,13 @@ const booking_requests = {};
 io.on("connection", (socket) => {
   // Parse cookies to extract the access token
   const cookies = cookie.parse(socket.handshake.headers.cookie || "");
-  const accessToken = cookies.Accesstoken; // Adjust cookie name if needed
+  const accessToken = cookies.Accesstoken;
 
   if (accessToken) {
     try {
-      const decoded = jwt.verify(accessToken, "your_secret_key"); // Replace with your actual secret key
-      const userId = decoded.userId; // Extract userId from token
-      console.log(`User connected with ID: ${userId}`);
-      socket.userId = userId; // Store user ID in the socket
+      const decoded = jwt.verify(accessToken, process.env.JWT_SECRET);
+      socket.userId = decoded.userId;
+      console.log(`User connected with ID: ${socket.userId}`);
     } catch (err) {
       console.log("Invalid or expired access token");
     }
@@ -65,19 +63,12 @@ io.on("connection", (socket) => {
   // Update driver location
   socket.on("update_location", ({ latitude, longitude }) => {
     driverLocations[socket.id] = { latitude, longitude };
-
     console.log(`Driver ${socket.id} updated location: `, latitude, longitude);
 
     Object.keys(booking_requests).forEach((requestId) => {
-      if (
-        booking_requests[requestId].accepted &&
-        booking_requests[requestId].driverId === socket.id
-      ) {
-        const riderUserId = booking_requests[requestId].riderUserId;
-        const riderSocket = [...io.sockets.sockets.values()].find(
-          (s) => s.userId === riderUserId
-        );
-
+      const request = booking_requests[requestId];
+      if (request.accepted && request.driverId === socket.id) {
+        const riderSocket = findRiderSocket(request.riderUserId);
         if (riderSocket) {
           riderSocket.emit("driver_location_update", { latitude, longitude });
         }
@@ -88,12 +79,10 @@ io.on("connection", (socket) => {
   // Rider requests a ride
   socket.on("book_request", (data) => {
     console.log("New ride request: ", data);
-
     const requestId = `ride_${Date.now()}`;
 
     booking_requests[requestId] = {
-      riderUserId: socket.userId, // Store userId instead of socket.id
-      riderSocketId: socket.id, // Still store socket.id initially
+      riderUserId: socket.userId,
       data,
       accepted: false,
       driverId: null,
@@ -115,16 +104,14 @@ io.on("connection", (socket) => {
     );
 
     if (rideRequest) {
-      const riderSocket = [...io.sockets.sockets.values()].find(
-        (s) => s.userId === rideRequest.riderUserId
-      );
-
+      const riderSocket = findRiderSocket(rideRequest.riderUserId);
       if (riderSocket) {
         riderSocket.emit("driver_location_update", { lat, lng });
       }
     }
   });
 
+  // Driver accepts a ride
   socket.on("accept_ride", ({ requestId, driverId }) => {
     console.log(`Driver ${driverId} accepted ride ${requestId}`);
 
@@ -132,18 +119,12 @@ io.on("connection", (socket) => {
       booking_requests[requestId].accepted = true;
       booking_requests[requestId].driverId = driverId;
 
-      const riderUserId = booking_requests[requestId].riderUserId;
-
-      // Find the latest socket ID for this user
-      const riderSocket = [...io.sockets.sockets.values()].find(
-        (s) => s.userId === riderUserId
+      const riderSocket = findRiderSocket(
+        booking_requests[requestId].riderUserId
       );
-
-      console.log("Booking requests: ", booking_requests);
-      console.log("Rider socket: ", riderSocket);
+      console.log("Found Rider Socket:", riderSocket?.id);
 
       if (riderSocket) {
-        console.log("Rider socket found");
         riderSocket.emit("ride_accepted", {
           driverId,
           requestId,
@@ -154,6 +135,7 @@ io.on("connection", (socket) => {
         }
       }
 
+      // Notify other drivers that this ride is taken
       Object.values(activeDrivers).forEach((driverSocket) => {
         if (driverSocket.id !== driverId) {
           driverSocket.emit("ride_taken", requestId);
@@ -164,7 +146,7 @@ io.on("connection", (socket) => {
     console.log(`Ride ${requestId} accepted by Driver ${driverId}`);
   });
 
-  // Handle rider reconnection and restore ride status
+  // Handle rider reconnection
   socket.on("reconnect_rider", () => {
     if (!socket.userId) return;
 
@@ -196,6 +178,11 @@ io.on("connection", (socket) => {
     delete driverLocations[socket.id];
   });
 });
+
+// Helper function to find a rider's active socket
+function findRiderSocket(riderUserId) {
+  return [...io.sockets.sockets.values()].find((s) => s.userId === riderUserId);
+}
 
 app.get("/", (req, res) => {
   res.send("Taxi Booking API is running...");
