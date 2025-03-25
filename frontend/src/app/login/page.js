@@ -49,6 +49,7 @@ function Login() {
       const data = await response.json();
       console.log(data);
       set_user(data);
+      localStorage.setItem("user", data.name);
       toast.success("Login Successful");
 
       router.push("/booking");
