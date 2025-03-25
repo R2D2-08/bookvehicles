@@ -4,6 +4,7 @@ const Driver = require("./Drivers");
 const Passenger = require("./Passengers");
 const Location = require("./Locations");
 const Payment = require("./Payment");
+const User = require("./Users");
 
 const Ride = sequelize.define(
   "Ride",

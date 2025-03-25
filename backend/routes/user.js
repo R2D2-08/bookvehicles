@@ -94,6 +94,9 @@ router.post("/register", upload.single("profileImage"), async (req, res) => {
         license_no,
         vehicle_id: newVehicle.id,
       });
+      await Passenger.create({
+        user_id: newUser.id,
+      });
     } else {
       await Passenger.create({
         user_id: newUser.id,
