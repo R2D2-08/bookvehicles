@@ -210,20 +210,33 @@ const DriverDashboard = () => {
         {activeTab === "profile" && <UserProfile />}
 
         {activeTab === "car" && (
-          <div className="flex flex-col justify-center items-center h-full">
-            <Image
-              src="/images/car.webp"
-              alt="Driver's Car"
-              width={500}
-              height={300}
-              className="rounded-xl shadow-lg"
-            />
-            <p className="mt-4 text-lg text-gray-700 text-center max-w-md font-semibold">
-              The Ferrari R-800 is an amazing addition to the collection of cars
-              you would want to transit in.
-            </p>
-          </div>
-        )}
+  <div className="flex flex-row justify-center items-center h-full gap-8 p-6">
+    {/* Left Column: Car Image */}
+    <div className="flex-1 flex justify-center">
+      <Image
+        src="/images/car.webp"
+        alt="Driver's Car"
+        width={600}
+        height={350}
+        className="rounded-xl shadow-lg"
+      />
+    </div>
+
+    {/* Right Column: Car Details */}
+    <div className="flex-1 bg-white p-6 rounded-xl shadow-md text-left max-w-md">
+      <h2 className="text-2xl font-bold text-gray-800 mb-3">Vehicle Details</h2>
+      <p className="text-lg text-gray-700 font-semibold">Ferrari R-800</p>
+      <p className="text-gray-600">Type: Sedan</p>
+      <p className="text-gray-600">License Plate: ABC-1234</p>
+      <p className="text-gray-600">Color: Red</p>
+      <p className="text-gray-600">Seats Available: 4</p>
+      <p className="mt-4 text-sm text-gray-500">
+        This car is well-maintained and ensures a smooth ride.
+      </p>
+    </div>
+  </div>
+)}
+
 
         {activeTab === "notifications" && !activeRide && (
           <div className="flex flex-col gap-4 p-6 bg-white shadow-md rounded-xl max-w-lg mx-auto">
