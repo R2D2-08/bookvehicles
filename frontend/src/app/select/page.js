@@ -61,6 +61,7 @@ const SelectRide = () => {
   const [dropLoc, setDropLoc] = useState(null);
   const [pickCoordinates, setPickCoordinates] = useState(null);
   const [dropCoordinates, setDropCoordinates] = useState(null);
+  const [id, setId] = useState(null);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -74,6 +75,15 @@ const SelectRide = () => {
   }, []);
 
   useEffect(() => {
+    fetch("http://localhost:5000/api/users/id", {
+      method: "GET",
+      credentials: "include",
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        setId(data.id);
+      })
+      .catch((err) => console.error("Error fetching ID:", err));
     const socket = io("http://localhost:5000", { withCredentials: true });
 
     socket.on("ride_accepted", ({ driverId }) => {
@@ -116,11 +126,13 @@ const SelectRide = () => {
     const socket = io("http://localhost:5000");
     socket.emit("book_request", {
       rideType: selected,
+      id: id,
       pickLoc,
       dropLoc,
       pickCoordinates,
       dropCoordinates,
       price: estimatedPrice,
+      distance: distance / 1000,
       booking_date: new Date().toISOString(),
     });
   };

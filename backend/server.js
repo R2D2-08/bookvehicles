@@ -10,10 +10,12 @@ const http = require("http");
 const cookie = require("cookie");
 const jwt = require("jsonwebtoken");
 const path = require("path");
-
+const Ride = require("./models/Rides");
+const Location = require("./models/Locations");
 const app = express();
 const server = http.createServer(app);
 const { Server } = require("socket.io");
+const adminRoutes = require("./routes/user");
 
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 const io = new Server(server, {
@@ -32,6 +34,7 @@ app.use(morgan("dev"));
 app.use(cookieParser());
 app.use(express.json());
 app.use("/api", routes);
+app.use("/admin", adminRoutes);
 
 const PORT = process.env.PORT || 5000;
 
@@ -77,22 +80,57 @@ io.on("connection", (socket) => {
   });
 
   // Rider requests a ride
-  socket.on("book_request", (data) => {
+  socket.on("book_request", async (data) => {
     console.log("New ride request: ", data);
     const requestId = `ride_${Date.now()}`;
+    const vehicleTypes = ["premium", "standard", "auto", "bike"];
 
-    booking_requests[requestId] = {
-      riderUserId: socket.userId,
-      data,
-      accepted: false,
-      driverId: null,
-    };
+    try {
+      const newPickupLocation = await Location.create({
+        coordinates: {
+          type: "Point",
+          coordinates: [data.pickCoordinates[0], data.pickCoordinates[1]],
+        },
+        address: data.pickLoc,
+      });
 
-    console.log("Booking requests: ", booking_requests);
+      const newDropoffLocation = await Location.create({
+        coordinates: {
+          type: "Point",
+          coordinates: [data.dropCoordinates[0], data.dropCoordinates[1]],
+        },
+        address: data.dropLoc,
+      });
 
-    Object.values(activeDrivers).forEach((driverSocket) => {
-      driverSocket.emit("new_ride_request", { requestId, data });
-    });
+      const newRide = await Ride.create({
+        driver_id: null,
+        passenger_id: data.id,
+        start_location_id: newPickupLocation.id,
+        end_location_id: newDropoffLocation.id,
+        fare: data.price,
+        booking_date: data.booking_date,
+        status: "pending",
+        vehicle_requested: vehicleTypes[data.rideType],
+        distance: data.distance,
+      });
+
+      console.log("Ride created successfully:", newRide);
+      booking_requests[requestId] = {
+        rideId: newRide.ride_id,
+        riderUserId: socket.userId,
+        data,
+        accepted: false,
+        driverId: null,
+      };
+
+      console.log("Booking requests: ", booking_requests);
+
+      Object.values(activeDrivers).forEach((driverSocket) => {
+        driverSocket.emit("new_ride_request", { requestId, data });
+      });
+    } catch (error) {
+      console.error("Error creating ride:", error);
+    }
   });
 
   // Driver sends location update
@@ -141,6 +179,11 @@ io.on("connection", (socket) => {
           driverSocket.emit("ride_taken", requestId);
         }
       });
+
+      const updatedRide = Ride.update(
+        { driver_id: driverId, status: "accepted" },
+        { where: { ride_id: booking_requests[requestId].rideId } }
+      );
     }
 
     console.log(`Ride ${requestId} accepted by Driver ${driverId}`);
