@@ -9,12 +9,13 @@ function DriverSignup() {
   const [driver, setDriver] = useState({
     name: "",
     email: "",
-    phone: "",
+    phone_no: "",
     password: "",
     license_no: ""
   });
+
   const [vehicle, setVehicle] = useState({
-    vehicle_no: "",
+    vehicle_id: "",
     type: "",
     capacity: "",
     model: "",
@@ -24,19 +25,21 @@ function DriverSignup() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    step === 1
-      ? setDriver({ ...driver, [name]: value })
-      : setVehicle({ ...vehicle, [name]: value });
+    if (step === 1) {
+      setDriver((prev) => ({ ...prev, [name]: value }));
+    } else {
+      setVehicle((prev) => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      setVehicle({
-        ...vehicle,
-        photo: file,
+      setVehicle((prev) => ({
+        ...prev,
+        vehicle_image: file,
         photoPreview: URL.createObjectURL(file)
-      });
+      }));
     }
   };
 
@@ -50,8 +53,16 @@ function DriverSignup() {
       const formData = new FormData();
       Object.entries(driver).forEach(([key, value]) => formData.append(key, value));
       Object.entries(vehicle).forEach(([key, value]) => {
-        if (key !== "photoPreview") formData.append(key, value);
+        if (key !== "photoPreview" && key !== "vehicle_image") {
+          formData.append(key, value);
+        }
       });
+
+      formData.append("role", 'driver');
+
+      if (vehicle.vehicle_image) {
+        formData.append("vehicle_image", vehicle.vehicle_image);
+      }
 
       const response = await fetch("http://localhost:5000/api/users/register", {
         method: "POST",
@@ -60,9 +71,11 @@ function DriverSignup() {
       });
 
       if (!response.ok) {
-        console.log("Registration failed");
+        const decoded = await response.json();
+        console.log(decoded.error);
         return;
       }
+
       alert("Registration successful!");
       router.push("/login");
     } catch (error) {
@@ -82,7 +95,7 @@ function DriverSignup() {
                 {Object.keys(driver).map((key) => (
                   <div className="py-1" key={key}>
                     <label htmlFor={key} className="mb-1 text-md capitalize">
-                      {key.replace(/([A-Z])/g, " $1").trim()}
+                      {key.replace(/_/g, " ")}
                     </label>
                     <input
                       value={driver[key]}
@@ -90,7 +103,7 @@ function DriverSignup() {
                       type={key === "password" ? "password" : "text"}
                       name={key}
                       className="w-full p-2 border border-gray-300 rounded-md"
-                      placeholder={`Enter your ${key}`}
+                      placeholder={`Enter your ${key.replace(/_/g, " ")}`}
                     />
                   </div>
                 ))}
@@ -108,25 +121,37 @@ function DriverSignup() {
               <h1 className="mb-1 text-3xl font-bold">Vehicle Details</h1>
               <p className="font-light text-gray-400 mb-2">Enter your vehicle details</p>
               <form onSubmit={handleSubmit}>
-                {Object.keys(vehicle).map((key) => (
-                  key !== "photoPreview" && (
+                {Object.keys(vehicle).map((key) =>
+                  key !== "photoPreview" && key !== "vehicle_image" ? (
                     <div className="py-1" key={key}>
                       <label htmlFor={key} className="mb-1 text-md capitalize">
-                        {key.replace(/([A-Z])/g, " $1").trim()}
+                        {key.replace(/_/g, " ")}
                       </label>
                       <input
-                        value={key === "photo" ? "" : vehicle[key]}
+                        value={vehicle[key]}
                         onChange={handleChange}
-                        type={key === "photo" ? "file" : "text"}
+                        type="text"
                         name={key}
-                        accept={key === "photo" ? "image/*" : ""}
                         className="w-full p-2 border border-gray-300 rounded-md"
-                        placeholder={`Enter your ${key}`}
-                        onChange={key === "photo" ? handleImageChange : handleChange}
+                        placeholder={`Enter your ${key.replace(/_/g, " ")}`}
                       />
                     </div>
-                  )
-                ))}
+                  ) : null
+                )}
+
+                <div className="py-1">
+                  <label htmlFor="vehicle_image" className="mb-1 text-md capitalize">
+                    Vehicle Image
+                  </label>
+                  <input
+                    type="file"
+                    name="vehicle_image"
+                    accept="image/*"
+                    className="w-full p-2 border border-gray-300 rounded-md"
+                    onChange={handleImageChange}
+                  />
+                </div>
+
                 {vehicle.photoPreview && (
                   <div className="mt-3 flex flex-col items-center">
                     <p className="text-gray-600">Photo Preview:</p>
@@ -137,6 +162,7 @@ function DriverSignup() {
                     />
                   </div>
                 )}
+
                 <button
                   type="submit"
                   className="w-full bg-black text-white p-2 rounded-lg mt-3 hover:bg-gray-800"

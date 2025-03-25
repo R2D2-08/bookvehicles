@@ -60,9 +60,10 @@ router.post(
   ]),
   async (req, res) => {
     try {
-      const { name, email, password, phone_no, license_no, vehicle } =
+      const { name, email, password, phone_no, role, license_no, vehicle_id, type, capacity, model } =
         req.body;
       console.log(req.body, "checking out router.post(/register)");
+
 
       const existingUser = await User.findOne({ where: { email } });
       if (existingUser)
@@ -83,17 +84,17 @@ router.post(
       });
 
       if (role === "driver") {
-        if (!license_no || !vehicle) {
+        if (!license_no || !vehicle_id) {
           return res.status(400).json({
             error: "Drivers must provide license number and vehicle details",
           });
         }
 
         const newVehicle = await Vehicle.create({
-          vehicle_no: vehicle.vehicle_no,
-          type: vehicle.type,
-          capacity: vehicle.capacity,
-          model: vehicle.model,
+          vehicle_no: vehicle_id,
+          type,
+          capacity,
+          model,
           image_url:  vehicleImage,
         });
 
