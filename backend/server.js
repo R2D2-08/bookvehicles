@@ -9,6 +9,8 @@ const cookieParser = require("cookie-parser");
 const http = require("http");
 const cookie = require("cookie");
 const jwt = require("jsonwebtoken");
+const path = require("path");
+
 const app = express();
 const server = http.createServer(app);
 const { Server } = require("socket.io");
