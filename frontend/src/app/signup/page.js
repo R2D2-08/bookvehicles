@@ -38,7 +38,7 @@ function Signup() {
       formData.append("password", user.password);
       formData.append("phone_no", user.phone_no);
       if (user.photo_url) {
-        formData.append("photo", user.photo_url);
+        formData.append("profileImage", user.photo_url);
       }
 
       const response = await fetch("http://localhost:5000/api/users/register", {
@@ -130,6 +130,7 @@ function Signup() {
                 <input
                   type="file"
                   accept="image/*"
+                  name="profileImage"
                   className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                   onChange={handleImageChange}
                 />

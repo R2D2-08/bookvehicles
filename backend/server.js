@@ -9,6 +9,8 @@ const cookieParser = require("cookie-parser");
 const http = require("http");
 const cookie = require("cookie");
 const jwt = require("jsonwebtoken");
+const path = require("path");
+
 const app = express();
 const server = http.createServer(app);
 const { Server } = require("socket.io");
@@ -22,6 +24,8 @@ app.use(
     contentSecurityPolicy: false,
   })
 );
+
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 app.use(cors({ origin: "http://localhost:3000", credentials: true }));
 app.use(morgan("dev"));
