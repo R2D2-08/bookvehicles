@@ -8,6 +8,7 @@ const Passenger = require("../models/Passengers");
 const Driver = require("../models/Drivers");
 const Vehicle = require("../models/Vehicles");
 const Location = require("../models/Locations");
+const Review = require("../models/Reviews");
 const multer = require("multer");
 const router = express.Router();
 const path = require("path");
@@ -254,6 +255,52 @@ router.get("/payments", authenticate, authorize(["admin"]), async (req, res) => 
     res.json(payments);
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+});
+
+router.post('/reviews', async (req, res) => {
+  try {
+      const { ride_id, reviewer_id, reviewee_id, rating, review_text, review_type } = req.body;
+
+      if (!ride_id || !reviewer_id || !reviewee_id || !rating || !review_type) {
+          return res.status(400).json({ error: 'Missing required fields' });
+      }
+
+      const review = await Review.create({
+          ride_id,
+          reviewer_id,
+          reviewee_id,
+          rating,
+          review_text,
+          review_type
+      });
+
+      res.status(201).json({ message: 'Review posted successfully', review });
+  } catch (error) {
+      res.status(500).json({ error: error.message });
+  }
+});
+
+router.post('/ratings', async (req, res) => {
+  try {
+      const { ride_id, reviewer_id, reviewee_id, rating, review_type } = req.body;
+
+      if (!ride_id || !reviewer_id || !reviewee_id || !rating || !review_type) {
+          return res.status(400).json({ error: 'Missing required fields' });
+      }
+
+      const ratingEntry = await Review.create({
+          ride_id,
+          reviewer_id,
+          reviewee_id,
+          rating,
+          review_text: null,
+          review_type
+      });
+
+      res.status(201).json({ message: 'Rating posted successfully', ratingEntry });
+  } catch (error) {
+      res.status(500).json({ error: error.message });
   }
 });
 

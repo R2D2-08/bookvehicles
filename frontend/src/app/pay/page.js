@@ -1,6 +1,5 @@
 "use client";
-import React, { useState } from "react";
-import { useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 
 export default function PaymentPage() {
@@ -8,25 +7,44 @@ export default function PaymentPage() {
   const [review, setReview] = useState("");
   const [paymentDone, setPaymentDone] = useState(false);
   const [price, setPrice] = useState(0);
-  
+  const [rideId, setRideId] = useState(null);
+  const [revieweeId, setRevieweeId] = useState(null);
+
   useEffect(() => {
-    const storedPrice = JSON.parse(localStorage.getItem("ridePrice"));
-    if (storedPrice) setPrice(storedPrice);
+    const fetchRideDetails = async () => {
+      try {
+        const userId = 6; // ADDED VALUE RANDOMLY AJUST FROM LOCALSTORAGE
+        if (!userId) {
+          console.error("User not logged in.");
+          return;
+        }
+        console.log(userId);/*
+        const response = await fetch(`http://localhost:5000/api/rides/latest?userId=${userId}`);
+        if (!response.ok) {
+          throw new Error("Failed to fetch ride details");
+        }
+*/
+//        const data = await response.json();
+        setPrice(0);
+        setRideId( 6);
+        setRevieweeId(2);
+      } catch (error) {
+        console.error("Error fetching ride details:", error);
+      }
+    };
+
+    fetchRideDetails();
   }, []);
 
-  const handlePayment = async () => {
-    // Load the Razorpay script dynamically
-    console.log("Razorpay Key:", process.env.REACT_APP_RAZORPAY_KEY);
-
-
+  const handlePayment = () => {
     const script = document.createElement("script");
     script.src = "https://checkout.razorpay.com/v1/checkout.js";
     script.async = true;
     document.body.appendChild(script);
-  
+
     script.onload = () => {
       const options = {
-        key: "rzp_test_pCp8FyWWmu8vhd", // Use public key
+        key: "rzp_test_pCp8FyWWmu8vhd",
         amount: price * 100,
         currency: "INR",
         name: "Uber Clone",
@@ -37,14 +55,54 @@ export default function PaymentPage() {
         },
         theme: { color: "#007AFF" },
       };
-  
+
       const razor = new window.Razorpay(options);
       razor.open();
     };
-  
+
     script.onerror = () => {
       console.error("Failed to load Razorpay script");
     };
+  };
+
+  const handleReviewSubmit = async () => {
+    if (!rideId || !revieweeId || rating === 0 || review.trim() === "") {
+      alert("Please provide a rating and review.");
+      return;
+    }
+
+    const reviewerId = 6; //localStorage.getItem("userId") || null;
+    if (!reviewerId) {
+      alert("User not logged in.");
+      return;
+    }
+
+    const payload = {
+      ride_id: rideId,
+      reviewer_id: reviewerId,
+      reviewee_id: revieweeId,
+      rating,
+      review_text: review,
+      review_type: "driver",
+    };
+
+    try {
+      const response = await fetch("http://localhost:5000/api/users/reviews", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (response.ok) {
+        alert("Review Submitted!");
+      } else {
+        const data = await response.json();
+        alert("Error: " + data.message);
+      }
+    } catch (error) {
+      console.error("Error submitting review:", error);
+      alert("Something went wrong.");
+    }
   };
 
   return (
@@ -97,7 +155,7 @@ export default function PaymentPage() {
           />
           <button
             className="mt-4 bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-lg w-full transition"
-            onClick={() => alert("Review Submitted!")}
+            onClick={handleReviewSubmit}
           >
             Submit Review
           </button>
