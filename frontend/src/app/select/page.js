@@ -126,7 +126,7 @@ const SelectRide = () => {
   };
 
   return (
-    <div className="w-full max-w-2xl mx-auto mt-10 p-6 rounded-lg md:shadow-xl md:border border-neutral-200 bg-white sm:p-8">
+    <div className="w-full max-w-2xl mx-auto my-10 p-6 rounded-lg md:shadow-xl md:border md:border-neutral-200 bg-white sm:p-8">
       <div className="mb-6 text-center">
         <h1 className="text-2xl font-semibold">Select Ride Type</h1>
         <p className="text-neutral-600">Choose the type of ride you want</p>

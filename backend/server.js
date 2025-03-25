@@ -15,6 +15,7 @@ const app = express();
 const server = http.createServer(app);
 const { Server } = require("socket.io");
 
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 const io = new Server(server, {
   cors: { origin: "http://localhost:3000", credentials: true },
 });
