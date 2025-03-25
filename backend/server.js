@@ -3,7 +3,7 @@ const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
 const morgan = require("morgan");
-const { sequelize, syncDatabase } = require("./models");
+const { sequelize, syncDatabase, User } = require("./models");
 const routes = require("./routes");
 const cookieParser = require("cookie-parser");
 const http = require("http");
@@ -16,7 +16,7 @@ const app = express();
 const server = http.createServer(app);
 const { Server } = require("socket.io");
 const adminRoutes = require("./routes/user");
-
+const Driver = require("./models/Drivers");
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 const io = new Server(server, {
   cors: { origin: "http://localhost:3000", credentials: true },
@@ -133,19 +133,57 @@ io.on("connection", (socket) => {
     }
   });
 
-  // Driver sends location update
-  socket.on("driver_location", ({ driverId, lat, lng }) => {
+  socket.on("driver_location", async ({ driverId, lat, lng }) => {
     console.log(`Driver ${driverId} location: ${lat}, ${lng}`);
 
-    const rideRequest = Object.values(booking_requests).find(
-      (req) => req.accepted && req.driverId === driverId
-    );
+    try {
+      // Find the driver
+      const driver = await User.findOne({ where: { id: driverId } });
 
-    if (rideRequest) {
-      const riderSocket = findRiderSocket(rideRequest.riderUserId);
-      if (riderSocket) {
-        riderSocket.emit("driver_location_update", { lat, lng });
+      if (!driver) {
+        console.error(`Driver ${driverId} not found`);
+        return;
       }
+
+      if (!driver.location_id) {
+        // Create new location if it doesn't exist
+        const newLocation = await Location.create({
+          coordinates: {
+            type: "Point",
+            coordinates: [lat, lng],
+          },
+        });
+
+        driver.location_id = newLocation.id;
+        await driver.save(); // Ensure the driver record is updated
+      } else {
+        const location = await Location.findOne({
+          where: { id: driver.location },
+        });
+
+        if (location) {
+          location.coordinates = {
+            type: "Point",
+            coordinates: [lat, lng],
+          };
+          await location.save();
+        } else {
+          console.error(`Location ${driver.location} not found`);
+        }
+      }
+
+      const rideRequest = Object.values(booking_requests).find(
+        (req) => req.accepted && req.driverId === driverId
+      );
+
+      if (rideRequest) {
+        const riderSocket = findRiderSocket(rideRequest.riderUserId);
+        if (riderSocket) {
+          riderSocket.emit("driver_location_update", { lat, lng });
+        }
+      }
+    } catch (error) {
+      console.error("Error updating driver location:", error);
     }
   });
 
