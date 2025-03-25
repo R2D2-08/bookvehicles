@@ -2,9 +2,12 @@ const express = require("express");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const User = require("../models/Users");
+const Ride = require("../models/Rides");
+const Payment = require("../models/Payment");
 const Passenger = require("../models/Passengers");
 const Driver = require("../models/Drivers");
 const Vehicle = require("../models/Vehicles");
+const Location = require("../models/Locations");
 const multer = require("multer");
 const router = express.Router();
 const path = require("path");
@@ -179,7 +182,10 @@ router.get(
   authorize(["admin"]),
   async (req, res) => {
     try {
-      const users = await User.findAll({ where: { role: "user" } });
+      const users = await User.findAll({ 
+        where: { role: "user" },
+        attributes: ["id", "name", "role", "photo_url", "phone_no", "email", "rating", "location_id", "createdAt"],
+      });
       res.json(users);
     } catch (err) {
       res.status(500).json({ error: err.message });
@@ -189,12 +195,65 @@ router.get(
 
 router.get("/drivers", authenticate, authorize(["admin"]), async (req, res) => {
   try {
-    const users = await User.findAll({ where: { role: "driver" } });
+    const users = await User.findAll({ 
+      where: { role: "driver" },
+      attributes: ["role", "id", "name", "phone_no", "email", "rating", "createdAt"], 
+    });
     res.json(users);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
+
+router.get("/stats", authenticate, authorize(["admin"]), async (req, res) => {
+  try {
+    const stats = {
+      drivers: await User.count({ where: { role: "driver" } }),
+      users: await User.count({ where: { role: "user" } }),
+      rides: await Ride.count(),
+      revenue: await Payment.sum("amount"),
+    };
+    res.json(stats);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
+router.get("/rides", authenticate, authorize(["admin"]), async (req, res) => {
+  try {
+    const rides = await Ride.findAll({
+      attributes: ["ride_id", "driver_id", "passenger_id", "fare"],
+      include: [
+        {
+          model: Location,
+          as: "startLocation",
+          attributes: ["address"],
+        },
+        {
+          model: Location,
+          as: "endLocation",
+          attributes: ["address"],
+        },
+      ],
+    });
+    res.json(rides);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.get("/payments", authenticate, authorize(["admin"]), async (req, res) => {
+  try {
+    const payments = await Payment.findAll({
+      attributes: ["transaction_id", "amount", "payment_status"],
+    });
+    res.json(payments);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 
 router.post("/logout", (req, res) => {
   res.clearCookie("refreshToken");
