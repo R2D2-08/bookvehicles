@@ -12,7 +12,9 @@ const jwt = require("jsonwebtoken");
 const app = express();
 const server = http.createServer(app);
 const { Server } = require("socket.io");
+const path = require('path');
 
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 const io = new Server(server, {
   cors: { origin: "http://localhost:3000", credentials: true },
 });
