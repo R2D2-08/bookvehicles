@@ -1,6 +1,6 @@
 "use client";
 import io from "socket.io-client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import UserProfile from "../profile/page.js";
 import Image from "next/image";
 import "leaflet/dist/leaflet.css";
@@ -40,9 +40,10 @@ const DriverDashboard = () => {
   const [rideRequests, setRideRequests] = useState([]);
   const [socket, setSocket] = useState(null);
   const [driverId, setDriverId] = useState(null);
+  const socketRef = useRef(null);
+  const locationIntervalRef = useRef(null);
   useEffect(() => {
     setIsClient(true);
-
     fetch("http://localhost:5000/api/users/id", {
       method: "GET",
       credentials: "include",
@@ -50,22 +51,19 @@ const DriverDashboard = () => {
       .then((res) => res.json())
       .then((data) => {
         setDriverId(data.id);
-        console.log("Driver ID:", driverId);
       })
       .catch((err) => console.error("Error fetching driver ID:", err));
+  }, []);
 
-    const newSocket = io("http://localhost:5000", {
-      reconnection: true,
-      reconnectionAttempts: 5,
-      reconnectionDelay: 1000,
-      withCredentials: true,
-    });
+  useEffect(() => {
+    if (!driverId) return;
 
-    setSocket(newSocket);
+    const socket = io("http://localhost:5000", { withCredentials: true });
+    socketRef.current = socket;
 
-    newSocket.on("connect", () => {
+    socket.on("connect", () => {
       console.log("Connected to server");
-      newSocket.emit("driver_register");
+      socket.emit("driver_register", { driverId });
     });
 
     const handleNewRideRequest = ({ requestId, data }) => {
@@ -79,19 +77,46 @@ const DriverDashboard = () => {
           pickup: data.pickLoc,
           dropoff: data.dropLoc,
           fare: data.price,
-          time: `${Math.floor((Date.now() - data.booking_date) / 60)} mins ago`,
+          time: `${Math.floor(
+            (Date.now() - data.booking_date) / 60000
+          )} mins ago`,
         },
       ]);
     };
 
-    newSocket.on("new_ride_request", handleNewRideRequest);
+    socket.on("new_ride_request", handleNewRideRequest);
 
     return () => {
-      newSocket.off("new_ride_request", handleNewRideRequest);
-      newSocket.disconnect();
+      socket.off("new_ride_request", handleNewRideRequest);
+      socket.disconnect();
     };
-  }, []);
+  }, [driverId]);
 
+  useEffect(() => {
+    if (!driverId || !socketRef.current) return;
+
+    const sendLocation = () => {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          ({ coords }) => {
+            const { latitude, longitude } = coords;
+            socketRef.current.emit("driver_location", {
+              driverId,
+              lat: latitude,
+              lng: longitude,
+            });
+            console.log(`Location updated: ${latitude}, ${longitude}`);
+          },
+          (error) => console.error("Error getting location:", error),
+          { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+        );
+      }
+    };
+
+    locationIntervalRef.current = setInterval(sendLocation, 5000);
+
+    return () => clearInterval(locationIntervalRef.current);
+  }, [driverId]);
   const [activeTab, setActiveTab] = useState("profile");
   const [isAvailable, setIsAvailable] = useState(true);
   const [activeRide, setActiveRide] = useState(null);
@@ -99,37 +124,22 @@ const DriverDashboard = () => {
   let locationInterval;
 
   const handleAccept = (id) => {
-    const acceptedRide = rideRequests.find((req) => req.id === id);
+    if (!socketRef.current) {
+      console.error("Socket not initialized yet.");
+      return;
+    }
 
+    const acceptedRide = rideRequests.find((req) => req.id === id);
     if (acceptedRide) {
       setActiveRide(acceptedRide);
       setRideRequests([]);
 
-      // Emit ride acceptance
-      socket.emit("accept_ride", {
-        driverId: driverId,
+      socketRef.current.emit("accept_ride", {
+        driverId,
         requestId: acceptedRide.id,
-        pickupLocation: acceptedRide.pickupLocation,
-        dropoffLocation: acceptedRide.dropoffLocation,
+        pickup: acceptedRide.pickup,
+        dropoff: acceptedRide.dropoff,
       });
-
-      // Start sending live location
-      // locationInterval = setInterval(() => {
-      //   navigator.geolocation.getCurrentPosition(
-      //     (position) => {
-      //       const { latitude, longitude } = position.coords;
-      //       socket.emit("driverLocation", {
-      //         driverId: driver.id,
-      //         rideId: acceptedRide.id,
-      //         latitude,
-      //         longitude,
-      //       });
-      //     },
-      //     (error) => {
-      //       console.error("Error getting location:", error);
-      //     }
-      //   );
-      // }, 5000); // Send location every 5 seconds
     }
   };
 
@@ -210,33 +220,36 @@ const DriverDashboard = () => {
         {activeTab === "profile" && <UserProfile />}
 
         {activeTab === "car" && (
-  <div className="flex flex-row justify-center items-center h-full gap-8 p-6">
-    {/* Left Column: Car Image */}
-    <div className="flex-1 flex justify-center">
-      <Image
-        src="/images/car.webp"
-        alt="Driver's Car"
-        width={600}
-        height={350}
-        className="rounded-xl shadow-lg"
-      />
-    </div>
+          <div className="flex flex-row justify-center items-center h-full gap-8 p-6">
+            {/* Left Column: Car Image */}
+            <div className="flex-1 flex justify-center">
+              <Image
+                src="/images/car.webp"
+                alt="Driver's Car"
+                width={600}
+                height={350}
+                className="rounded-xl shadow-lg"
+              />
+            </div>
 
-    {/* Right Column: Car Details */}
-    <div className="flex-1 bg-white p-6 rounded-xl shadow-md text-left max-w-md">
-      <h2 className="text-2xl font-bold text-gray-800 mb-3">Vehicle Details</h2>
-      <p className="text-lg text-gray-700 font-semibold">Ferrari R-800</p>
-      <p className="text-gray-600">Type: Sedan</p>
-      <p className="text-gray-600">License Plate: ABC-1234</p>
-      <p className="text-gray-600">Color: Red</p>
-      <p className="text-gray-600">Seats Available: 4</p>
-      <p className="mt-4 text-sm text-gray-500">
-        This car is well-maintained and ensures a smooth ride.
-      </p>
-    </div>
-  </div>
-)}
-
+            {/* Right Column: Car Details */}
+            <div className="flex-1 bg-white p-6 rounded-xl shadow-md text-left max-w-md">
+              <h2 className="text-2xl font-bold text-gray-800 mb-3">
+                Vehicle Details
+              </h2>
+              <p className="text-lg text-gray-700 font-semibold">
+                Ferrari R-800
+              </p>
+              <p className="text-gray-600">Type: Sedan</p>
+              <p className="text-gray-600">License Plate: ABC-1234</p>
+              <p className="text-gray-600">Color: Red</p>
+              <p className="text-gray-600">Seats Available: 4</p>
+              <p className="mt-4 text-sm text-gray-500">
+                This car is well-maintained and ensures a smooth ride.
+              </p>
+            </div>
+          </div>
+        )}
 
         {activeTab === "notifications" && !activeRide && (
           <div className="flex flex-col gap-4 p-6 bg-white shadow-md rounded-xl max-w-lg mx-auto">
