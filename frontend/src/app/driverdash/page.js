@@ -35,6 +35,70 @@ const Popup = dynamic(() => import("react-leaflet").then((mod) => mod.Popup), {
   ssr: false,
 });
 
+const CarIcon = (props) => (
+  <svg
+    {...props}
+    fill="none"
+    stroke="currentColor"
+    viewBox="0 0 24 24"
+    strokeWidth={1.5}
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12"
+    />
+  </svg>
+);
+
+const LicensePlateIcon = (props) => (
+  <svg
+    {...props}
+    fill="none"
+    stroke="currentColor"
+    viewBox="0 0 24 24"
+    strokeWidth={1.5}
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75"
+    />
+  </svg>
+);
+
+const PaintBucketIcon = (props) => (
+  <svg
+    {...props}
+    fill="none"
+    stroke="currentColor"
+    viewBox="0 0 24 24"
+    strokeWidth={1.5}
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      d="M9.53 16.122a3 3 0 00-5.78 1.128 2.25 2.25 0 01-2.4 2.245 4.5 4.5 0 008.4-2.245c0-.399-.078-.78-.22-1.128zm0 0a15.998 15.998 0 003.388-1.62m-5.043-.025a15.994 15.994 0 011.622-3.395m3.42 3.42a15.995 15.995 0 004.764-4.648l3.876-5.814a1.151 1.151 0 00-1.597-1.597L14.146 6.32a15.996 15.996 0 00-4.649 4.763m3.42 3.42a6.776 6.776 0 00-3.42-3.42"
+    />
+  </svg>
+);
+
+const UserGroupIcon = (props) => (
+  <svg
+    {...props}
+    fill="none"
+    stroke="currentColor"
+    viewBox="0 0 24 24"
+    strokeWidth={1.5}
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z"
+    />
+  </svg>
+);
+
 const DriverDashboard = () => {
   const [isClient, setIsClient] = useState(false);
   const [rideRequests, setRideRequests] = useState([]);
@@ -220,36 +284,80 @@ const DriverDashboard = () => {
         {activeTab === "profile" && <UserProfile />}
 
         {activeTab === "car" && (
-          <div className="flex flex-row justify-center items-center h-full gap-8 p-6">
-            {/* Left Column: Car Image */}
-            <div className="flex-1 flex justify-center">
-              <Image
-                src="/images/car.webp"
-                alt="Driver's Car"
-                width={600}
-                height={350}
-                className="rounded-xl shadow-lg"
-              />
-            </div>
+        
+  <div className="flex flex-col lg:flex-row justify-center items-center h-full gap-8 p-6 bg-gradient-to-br from-gray-50 to-gray-100">
+    {/* Image Section with Hover Effect */}
+    <div className="flex-1 flex justify-center max-w-2xl transform transition-transform duration-500 hover:scale-105">
+      <div className="relative rounded-2xl overflow-hidden shadow-2xl border-8 border-white">
+        <Image
+          src="/images/car.webp"
+          alt="Driver's Car"
+          width={800}
+          height={500}
+          className="object-cover"
+          priority
+        />
+        <div className="absolute bottom-4 left-4 bg-red-600 text-white px-4 py-2 rounded-full text-sm font-bold">
+          PREMIUM CLASS
+        </div>
+      </div>
+    </div>
 
-            {/* Right Column: Car Details */}
-            <div className="flex-1 bg-white p-6 rounded-xl shadow-md text-left max-w-md">
-              <h2 className="text-2xl font-bold text-gray-800 mb-3">
-                Vehicle Details
-              </h2>
-              <p className="text-lg text-gray-700 font-semibold">
-                Ferrari R-800
-              </p>
-              <p className="text-gray-600">Type: Sedan</p>
-              <p className="text-gray-600">License Plate: ABC-1234</p>
-              <p className="text-gray-600">Color: Red</p>
-              <p className="text-gray-600">Seats Available: 4</p>
-              <p className="mt-4 text-sm text-gray-500">
-                This car is well-maintained and ensures a smooth ride.
-              </p>
+    {/* Details Section */}
+    <div className="flex-1 max-w-xl bg-gradient-to-br from-white to-gray-50 p-8 rounded-2xl shadow-2xl border border-gray-100">
+      <div className="space-y-6">
+        <h2 className="text-3xl font-extrabold text-gray-900 border-l-4 border-red-600 pl-4">
+          Vehicle Details
+        </h2>
+        
+        <div className="space-y-4">
+          <h3 className="text-2xl font-bold bg-gradient-to-r from-red-600 to-orange-500 bg-clip-text text-transparent">
+            Ferrari R-800
+          </h3>
+          
+          <div className="grid grid-cols-2 gap-4">
+            <div className="flex items-center space-x-2">
+              <CarIcon className="w-5 h-5 text-red-600" />
+              <div>
+                <p className="text-sm text-gray-500">Type</p>
+                <p className="font-medium text-gray-800">Sedan</p>
+              </div>
+            </div>
+            <div className="flex items-center space-x-2">
+              <LicensePlateIcon className="w-5 h-5 text-red-600" />
+              <div>
+                <p className="text-sm text-gray-500">License Plate</p>
+                <p className="font-medium text-gray-800">ABC-1234</p>
+              </div>
+            </div>
+            <div className="flex items-center space-x-2">
+              <PaintBucketIcon className="w-5 h-5 text-red-600" />
+              <div>
+                <p className="text-sm text-gray-500">Color</p>
+                <p className="font-medium text-gray-800">Rosso Corsa</p>
+              </div>
+            </div>
+            <div className="flex items-center space-x-2">
+              <UserGroupIcon className="w-5 h-5 text-red-600" />
+              <div>
+                <p className="text-sm text-gray-500">Seats</p>
+                <p className="font-medium text-gray-800">4 Available</p>
+              </div>
             </div>
           </div>
-        )}
+
+          <div className="mt-6 p-4 bg-red-50 rounded-lg border border-red-100">
+            <p className="text-sm text-gray-700 italic">
+              ★★★★★ (4.9/5.0 Rating)<br />
+              "Impeccably maintained with premium leather interior, dual-zone climate control, 
+              and advanced safety features. Experience luxury performance at its finest."
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+)}
 
         {activeTab === "notifications" && !activeRide && (
           <div className="flex flex-col gap-4 p-6 bg-white shadow-md rounded-xl max-w-lg mx-auto">
