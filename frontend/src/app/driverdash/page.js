@@ -206,7 +206,7 @@ const DriverDashboard = () => {
       setRideRequests([]);
 
       socketRef.current.emit("accept_ride", {
-        driverId,
+        driverId: driverId,
         requestId: acceptedRide.id,
         pickup: acceptedRide.pickup,
         dropoff: acceptedRide.dropoff,

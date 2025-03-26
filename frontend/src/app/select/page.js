@@ -87,6 +87,8 @@ const SelectRide = () => {
     const socket = io("http://localhost:5000", { withCredentials: true });
 
     socket.on("ride_accepted", ({ driverId }) => {
+      console.log("Received ride_accepted event from server");
+      console.log("Driver ID:", driverId);
       toast.success(`Ride accepted by Driver ${driverId}`);
       router.push("/eta");
     });
@@ -96,7 +98,7 @@ const SelectRide = () => {
     });
 
     return () => socket.disconnect();
-  }, [router]);
+  }, []);
 
   const distance = useMemo(() => {
     return pickCoordinates && dropCoordinates
