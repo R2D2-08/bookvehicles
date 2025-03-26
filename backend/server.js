@@ -158,7 +158,7 @@ io.on("connection", (socket) => {
         await driver.save(); // Ensure the driver record is updated
       } else {
         const location = await Location.findOne({
-          where: { id: driver.location },
+          where: { id: driver.location_id },
         });
 
         if (location) {
