@@ -14,7 +14,12 @@ import {
   Phone,
   UserCircle,
   XCircle,
-  CheckCircle
+  CheckCircle,
+  Edit,
+  BadgeCheck,
+  Star,
+  Mail,
+  ClipboardList,
 } from "lucide-react";
 
 import dynamic from "next/dynamic";
@@ -283,7 +288,129 @@ const DriverDashboard = () => {
       </div>
 
       <div className="flex-1 p-8">
-        {activeTab === "profile" && <UserProfile />}
+      {activeTab === "profile" && (
+  <div className="max-w-4xl mx-auto p-6">
+    <div className="bg-gradient-to-br from-white to-gray-50 rounded-2xl shadow-lg border border-gray-100">
+      {/* Profile Header */}
+      <div className="px-8 py-6 border-b border-gray-100">
+        <h2 className="text-3xl font-bold text-gray-900">Driver Profile</h2>
+        <p className="text-gray-500 mt-1">Manage your account information</p>
+      </div>
+
+      {/* Profile Content */}
+      <div className="p-8">
+        <div className="flex flex-col md:flex-row gap-8 items-start">
+          {/* Profile Image */}
+          <div className="relative group">
+            <div className="w-32 h-32 rounded-full border-4 border-white shadow-lg overflow-hidden">
+              <Image
+                src="/images/avatar-placeholder.jpg"
+                alt="Profile"
+                width={128}
+                height={128}
+                className="object-cover hover:scale-105 transition-transform"
+                priority
+              />
+            </div>
+            <button className="absolute bottom-0 right-0 bg-blue-500 text-white p-2 rounded-full shadow-md hover:bg-blue-600 transition-colors">
+              <Edit className="w-4 h-4" />
+            </button>
+          </div>
+
+          {/* Basic Info */}
+          <div className="space-y-2">
+            <h3 className="text-2xl font-bold text-gray-900">John Driver</h3>
+            <div className="flex items-center gap-2 text-gray-600">
+              <BadgeCheck className="w-5 h-5 text-green-500" />
+              <span>Verified Driver</span>
+            </div>
+            <div className="flex items-center gap-2 text-gray-600">
+              <Star className="w-5 h-5 text-yellow-500" />
+              <span>4.9/5.0 Rating (127 trips)</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Details Grid */}
+        <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Contact Information */}
+          <div className="bg-gray-50 p-6 rounded-xl">
+            <h4 className="text-lg font-semibold mb-4 flex items-center gap-2">
+              <UserCircle className="w-6 h-6 text-blue-500" />
+              Contact Information
+            </h4>
+            <div className="space-y-3">
+              <div className="flex items-center gap-3">
+                <Mail className="w-5 h-5 text-gray-500" />
+                <span className="text-gray-700">john.driver@example.com</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <Phone className="w-5 h-5 text-gray-500" />
+                <span className="text-gray-700">+1 (555) 123-4567</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <MapPin className="w-5 h-5 text-gray-500" />
+                <span className="text-gray-700">New York, USA</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Driver Information */}
+          <div className="bg-gray-50 p-6 rounded-xl">
+            <h4 className="text-lg font-semibold mb-4 flex items-center gap-2">
+              <ClipboardList className="w-6 h-6 text-green-500" />
+              Driver Information
+            </h4>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-sm text-gray-500">License Number</p>
+                <p className="font-medium">D123-4567-890</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">Expiry Date</p>
+                <p className="font-medium">2025-12-31</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">Years Driving</p>
+                <p className="font-medium">8 years</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">Trips Completed</p>
+                <p className="font-medium">247</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Vehicle Information */}
+          <div className="md:col-span-2 bg-gray-50 p-6 rounded-xl">
+            <h4 className="text-lg font-semibold mb-4 flex items-center gap-2">
+              <Car className="w-6 h-6 text-red-500" />
+              Vehicle Information
+            </h4>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div>
+                <p className="text-sm text-gray-500">Make & Model</p>
+                <p className="font-medium">Ferrari R-800</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">License Plate</p>
+                <p className="font-medium">ABC-1234</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">Color</p>
+                <p className="font-medium">Rosso Corsa</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">Year</p>
+                <p className="font-medium">2023</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+)}
 
         {activeTab === "car" && (
         
