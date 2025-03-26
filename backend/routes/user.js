@@ -8,6 +8,7 @@ const Passenger = require("../models/Passengers");
 const Driver = require("../models/Drivers");
 const Vehicle = require("../models/Vehicles");
 const Location = require("../models/Locations");
+const Review = require("../models/Reviews");
 const multer = require("multer");
 const router = express.Router();
 const path = require("path");
@@ -18,6 +19,8 @@ const { authenticate, authorize } = require("../middleware/auth");
 const { decode } = require("punycode");
 const { where } = require("sequelize");
 const uploadDir = path.join(__dirname, "../uploads");
+const pool = require("../db"); 
+
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
@@ -257,6 +260,63 @@ router.get("/payments", authenticate, authorize(["admin"]), async (req, res) => 
   }
 });
 
+router.post('/reviews', async (req, res) => {
+  try {
+      const { ride_id, reviewer_id, reviewee_id, rating, review_text, review_type } = req.body;
+      console.log(req.body);
+      if (!ride_id || !reviewer_id || !reviewee_id || !rating || !review_type) {
+          return res.status(400).json({ error: 'Missing required fields' });
+      }
+
+      const review = await Review.create({
+          ride_id,
+          reviewer_id,
+          reviewee_id,
+          rating,
+          review_text,
+          review_type,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+      });
+
+      res.status(201).json({ message: 'Review posted successfully', review });
+  } catch (error) {
+      res.status(500).json({ error: error.message });
+  }
+});
+
+
+router.post("/update-payment", async (req, res) => {
+  try {
+    console.log("Received body:", req.body);
+    let { transaction_id, amount, payment_status } = req.body;
+
+    // Ensure transaction_id is a string
+    transaction_id = String(transaction_id);
+
+    // Validate input
+    if (!transaction_id || !amount || payment_status === undefined) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+
+    // Ensure amount is a decimal
+    amount = parseFloat(amount);
+
+    // Insert or update the payment
+    const query = `
+      INSERT INTO payments (transaction_id, amount, payment_status, createdAt, updatedAt)
+      VALUES (?, ?, ?, NOW(), NOW())
+      ON DUPLICATE KEY UPDATE amount = VALUES(amount), payment_status = VALUES(payment_status), updatedAt = NOW();
+    `;
+
+    await pool.query(query, [transaction_id, amount, payment_status]);
+
+    res.json({ success: true, message: "Payment updated successfully" });
+  } catch (error) {
+    console.error("Database error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
 
 router.post("/logout", (req, res) => {
   res.clearCookie("refreshToken");

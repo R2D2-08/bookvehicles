@@ -50,6 +50,7 @@ function Login() {
       console.log(data);
       set_user(data);
       localStorage.setItem("user", data.name);
+      localStorage.setItem("user_id", data.id);
       toast.success("Login Successful");
 
       router.push("/booking");
