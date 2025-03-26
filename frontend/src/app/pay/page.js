@@ -13,7 +13,7 @@ export default function PaymentPage() {
   useEffect(() => {
     const fetchRideDetails = async () => {
       try {
-        const userId = 6; // ADDED VALUE RANDOMLY AJUST FROM LOCALSTORAGE
+        const userId = localStorage.getItem("userId") || 7;
         if (!userId) {
           console.error("User not logged in.");
           return;
@@ -22,12 +22,12 @@ export default function PaymentPage() {
         const response = await fetch(`http://localhost:5000/api/rides/latest?userId=${userId}`);
         if (!response.ok) {
           throw new Error("Failed to fetch ride details");
-        }
-*/
-//        const data = await response.json();
-        setPrice(0);
-        setRideId( 6);
-        setRevieweeId(2);
+        }*/      
+        const ridePrice = localStorage.getItem("ridePrice") || 1000;
+        setPrice(ridePrice);
+        setRideId(15);
+        const driverId = localStorage.getItem("driverId") || 4;
+        setRevieweeId(driverId);
       } catch (error) {
         console.error("Error fetching ride details:", error);
       }
@@ -47,11 +47,23 @@ export default function PaymentPage() {
         key: "rzp_test_pCp8FyWWmu8vhd",
         amount: price * 100,
         currency: "INR",
-        name: "Uber Clone",
+        name: "Vechicle Booking Service",
         description: "Ride Payment",
         handler: function (response) {
           setPaymentDone(true);
           console.log("Payment successful:", response);
+          fetch("http://localhost:5000/api/users/update-payment", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              transaction_id: response.razorpay_payment_id,
+              amount: price * 100, // Ensure price is in decimal format
+              payment_status: 1, // Assuming 1 means success
+            }),
+          })
+          .then(res => res.json())
+          .then(data => console.log("Payment updated:", data))
+          .catch(err => console.error("Error updating payment:", err));
         },
         theme: { color: "#007AFF" },
       };
@@ -71,7 +83,7 @@ export default function PaymentPage() {
       return;
     }
 
-    const reviewerId = 6; //localStorage.getItem("userId") || null;
+    const reviewerId = localStorage.getItem("userId") || 7;
     if (!reviewerId) {
       alert("User not logged in.");
       return;

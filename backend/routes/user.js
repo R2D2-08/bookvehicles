@@ -19,6 +19,8 @@ const { authenticate, authorize } = require("../middleware/auth");
 const { decode } = require("punycode");
 const { where } = require("sequelize");
 const uploadDir = path.join(__dirname, "../uploads");
+const pool = require("../db"); 
+
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
@@ -261,7 +263,7 @@ router.get("/payments", authenticate, authorize(["admin"]), async (req, res) => 
 router.post('/reviews', async (req, res) => {
   try {
       const { ride_id, reviewer_id, reviewee_id, rating, review_text, review_type } = req.body;
-
+      console.log(req.body);
       if (!ride_id || !reviewer_id || !reviewee_id || !rating || !review_type) {
           return res.status(400).json({ error: 'Missing required fields' });
       }
@@ -272,7 +274,9 @@ router.post('/reviews', async (req, res) => {
           reviewee_id,
           rating,
           review_text,
-          review_type
+          review_type,
+          createdAt: new Date(),
+          updatedAt: new Date(),
       });
 
       res.status(201).json({ message: 'Review posted successfully', review });
@@ -281,29 +285,38 @@ router.post('/reviews', async (req, res) => {
   }
 });
 
-router.post('/ratings', async (req, res) => {
+
+router.post("/update-payment", async (req, res) => {
   try {
-      const { ride_id, reviewer_id, reviewee_id, rating, review_type } = req.body;
+    console.log("Received body:", req.body);
+    let { transaction_id, amount, payment_status } = req.body;
 
-      if (!ride_id || !reviewer_id || !reviewee_id || !rating || !review_type) {
-          return res.status(400).json({ error: 'Missing required fields' });
-      }
+    // Ensure transaction_id is a string
+    transaction_id = String(transaction_id);
 
-      const ratingEntry = await Review.create({
-          ride_id,
-          reviewer_id,
-          reviewee_id,
-          rating,
-          review_text: null,
-          review_type
-      });
+    // Validate input
+    if (!transaction_id || !amount || payment_status === undefined) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
 
-      res.status(201).json({ message: 'Rating posted successfully', ratingEntry });
+    // Ensure amount is a decimal
+    amount = parseFloat(amount);
+
+    // Insert or update the payment
+    const query = `
+      INSERT INTO payments (transaction_id, amount, payment_status, createdAt, updatedAt)
+      VALUES (?, ?, ?, NOW(), NOW())
+      ON DUPLICATE KEY UPDATE amount = VALUES(amount), payment_status = VALUES(payment_status), updatedAt = NOW();
+    `;
+
+    await pool.query(query, [transaction_id, amount, payment_status]);
+
+    res.json({ success: true, message: "Payment updated successfully" });
   } catch (error) {
-      res.status(500).json({ error: error.message });
+    console.error("Database error:", error);
+    res.status(500).json({ error: "Internal server error" });
   }
 });
-
 
 router.post("/logout", (req, res) => {
   res.clearCookie("refreshToken");
