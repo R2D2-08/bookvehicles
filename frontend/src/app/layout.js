@@ -23,7 +23,7 @@ const geistMono = Geist_Mono({
 export default function RootLayout({ children }) {
   const [mounted, setMounted] = useState(false);
   const pathname = usePathname();
-  const publicRoutes = ["/", "/login", "/signup"];
+  const publicRoutes = ["/", "/login", "/signup", "/signup/driver"];
   const adminRoutes = ["/admin"];
   const driverRoutes = ["/driverdash"];
 
