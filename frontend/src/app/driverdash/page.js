@@ -13,6 +13,8 @@ import {
   MapPin,
   Phone,
   UserCircle,
+  XCircle,
+  CheckCircle
 } from "lucide-react";
 
 import dynamic from "next/dynamic";
@@ -359,46 +361,75 @@ const DriverDashboard = () => {
   </div>
 )}
 
-        {activeTab === "notifications" && !activeRide && (
-          <div className="flex flex-col gap-4 p-6 bg-white shadow-md rounded-xl max-w-lg mx-auto">
-            <h2 className="text-2xl font-bold text-gray-800">Ride Requests</h2>
-            {rideRequests.length > 0 ? (
-              rideRequests.map((request) => (
-                <div
-                  key={request.id}
-                  className="p-4 bg-gray-100 rounded-xl shadow flex flex-col gap-2"
-                >
-                  <p className="text-gray-800 font-semibold">
-                    <strong>Pickup:</strong> {request.pickup}{" "}
-                    <strong>Drop-off:</strong> {request.dropoff}
-                  </p>
-                  <p className="text-gray-600 font-medium">
-                    Fare: {request.fare}
-                  </p>
-                  <span className="text-sm text-gray-500">{request.time}</span>
-                  <div className="flex gap-3">
-                    <button
-                      className="bg-green-500 text-white px-4 py-2 rounded-lg w-full font-semibold transition-all hover:bg-green-600"
-                      onClick={() => handleAccept(request.id)}
-                    >
-                      Accept
-                    </button>
-                    <button
-                      className="bg-red-500 text-white px-4 py-2 rounded-lg w-full font-semibold transition-all hover:bg-red-600"
-                      onClick={() => handleReject(request.id)}
-                    >
-                      Reject
-                    </button>
+{activeTab === "notifications" && !activeRide && (
+  <div className="max-w-4xl mx-auto p-6">
+    <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+      <div className="px-6 py-4 border-b border-gray-100">
+        <h2 className="text-2xl font-bold text-gray-800">Ride Requests</h2>
+        <p className="text-gray-500 text-sm mt-1">Recent ride requests from passengers</p>
+      </div>
+      
+      {rideRequests.length > 0 ? (
+        <div className="divide-y divide-gray-100">
+          {rideRequests.map((request) => (
+            <div key={request.id} className="p-6 hover:bg-gray-50 transition-colors">
+              <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-center">
+                {/* Location Details */}
+                <div className="md:col-span-2">
+                  <div className="flex items-center gap-3">
+                    <div className="bg-blue-100 p-2 rounded-lg">
+                      <MapPin className="w-5 h-5 text-blue-600" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-gray-800">{request.pickup}</p>
+                      <p className="text-sm text-gray-500">to {request.dropoff}</p>
+                    </div>
                   </div>
                 </div>
-              ))
-            ) : (
-              <p className="text-gray-500 text-lg font-semibold text-center">
-                No new ride requests.
-              </p>
-            )}
+
+                {/* Fare & Time */}
+                <div className="space-y-1">
+                  <p className="text-sm text-gray-500">Fare</p>
+                  <p className="font-medium text-green-600">${request.fare}</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-sm text-gray-500">Requested</p>
+                  <p className="text-sm font-medium text-gray-800">{request.time}</p>
+                </div>
+
+                {/* Actions */}
+                <div className="flex gap-3 justify-end">
+                  <button
+                    onClick={() => handleAccept(request.id)}
+                    className="flex items-center gap-2 px-4 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors"
+                  >
+                    <CheckCircle className="w-5 h-5" />
+                    <span>Accept</span>
+                  </button>
+                  <button
+                    onClick={() => handleReject(request.id)}
+                    className="flex items-center gap-2 px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors"
+                  >
+                    <XCircle className="w-5 h-5" />
+                    <span>Reject</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="py-12 text-center">
+          <div className="max-w-md mx-auto">
+            <Bell className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-gray-900">No requests available</h3>
+            <p className="mt-1 text-sm text-gray-500">New ride requests will appear here automatically</p>
           </div>
-        )}
+        </div>
+      )}
+    </div>
+  </div>
+)}
 
         {/* Ride in Progress */}
         {activeTab === "notifications" && activeRide && (
