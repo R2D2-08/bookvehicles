@@ -84,7 +84,16 @@ const DriverDashboard = () => {
       ]);
     };
 
+    const handleRideTaken = ({ requestId}) => {
+      console.log(`Ride taken for ${requestId}`);
+      const index = rideRequests.findIndex((r) => r.id === requestId);
+      if (index > -1) {
+        setRideRequests((prev) => [...prev.slice(0, index),...prev.slice(index + 1)]);
+      }
+    }
+
     socket.on("new_ride_request", handleNewRideRequest);
+    socket.on("ride_taken", handleRideTaken);
 
     return () => {
       socket.off("new_ride_request", handleNewRideRequest);
