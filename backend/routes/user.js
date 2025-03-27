@@ -19,7 +19,7 @@ const { authenticate, authorize } = require("../middleware/auth");
 const { decode } = require("punycode");
 const { where } = require("sequelize");
 const uploadDir = path.join(__dirname, "../uploads");
-const pool = require("../db"); 
+const pool = require("../db");
 
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
@@ -38,7 +38,7 @@ const upload = multer({ storage });
 
 const cookieOptions = {
   httpOnly: true,
-  secure: process.env.NODE_ENV === "production",
+  secure: process.env.c === "production",
   sameSite: process.env.NODE_ENV === "production" ? "Strict" : "Lax",
 };
 
@@ -72,16 +72,30 @@ router.post(
   ]),
   async (req, res) => {
     try {
-      const { name, email, password, phone_no, role, license_no, vehicle_no, type, capacity, model } =
-        req.body;
+      const {
+        name,
+        email,
+        password,
+        phone_no,
+        role,
+        license_no,
+        vehicle_no,
+        type,
+        capacity,
+        model,
+      } = req.body;
       console.log(req.body, "checking out router.post(/register)");
       const existingUser = await User.findOne({ where: { email } });
       if (existingUser)
         return res.status(400).json({ error: "User already exists" });
 
       const hashedPassword = await bcrypt.hash(password, 10);
-      const photo_url = req.files["photo_url"] ? `/uploads/${req.files["photo_url"][0].filename}` : null;
-      const image_url = req.files["image_url"] ? `/uploads/${req.files["image_url"][0].filename}` : null;
+      const photo_url = req.files["photo_url"]
+        ? `/uploads/${req.files["photo_url"][0].filename}`
+        : null;
+      const image_url = req.files["image_url"]
+        ? `/uploads/${req.files["image_url"][0].filename}`
+        : null;
       console.log("Photo URL: " + photo_url);
       console.log("Image URL: " + image_url);
       const newUser = await User.create({
@@ -105,7 +119,7 @@ router.post(
           type: type,
           capacity: capacity,
           model: model,
-          image_url
+          image_url,
         });
 
         await Driver.create({
@@ -201,9 +215,19 @@ router.get(
   authorize(["admin"]),
   async (req, res) => {
     try {
-      const users = await User.findAll({ 
+      const users = await User.findAll({
         where: { role: "user" },
-        attributes: ["id", "name", "role", "photo_url", "phone_no", "email", "rating", "location_id", "createdAt"],
+        attributes: [
+          "id",
+          "name",
+          "role",
+          "photo_url",
+          "phone_no",
+          "email",
+          "rating",
+          "location_id",
+          "createdAt",
+        ],
       });
       res.json(users);
     } catch (err) {
@@ -214,9 +238,17 @@ router.get(
 
 router.get("/drivers", authenticate, authorize(["admin"]), async (req, res) => {
   try {
-    const users = await User.findAll({ 
+    const users = await User.findAll({
       where: { role: "driver" },
-      attributes: ["role", "id", "name", "phone_no", "email", "rating", "createdAt"], 
+      attributes: [
+        "role",
+        "id",
+        "name",
+        "phone_no",
+        "email",
+        "rating",
+        "createdAt",
+      ],
     });
     res.json(users);
   } catch (err) {
@@ -237,7 +269,6 @@ router.get("/stats", authenticate, authorize(["admin"]), async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-
 
 router.get("/rides", authenticate, authorize(["admin"]), async (req, res) => {
   try {
@@ -262,42 +293,53 @@ router.get("/rides", authenticate, authorize(["admin"]), async (req, res) => {
   }
 });
 
-router.get("/payments", authenticate, authorize(["admin"]), async (req, res) => {
-  try {
-    const payments = await Payment.findAll({
-      attributes: ["transaction_id", "amount", "payment_status"],
-    });
-    res.json(payments);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-router.post('/reviews', async (req, res) => {
-  try {
-      const { ride_id, reviewer_id, reviewee_id, rating, review_text, review_type } = req.body;
-      console.log(req.body);
-      if (!ride_id || !reviewer_id || !reviewee_id || !rating || !review_type) {
-          return res.status(400).json({ error: 'Missing required fields' });
-      }
-
-      const review = await Review.create({
-          ride_id,
-          reviewer_id,
-          reviewee_id,
-          rating,
-          review_text,
-          review_type,
-          createdAt: new Date(),
-          updatedAt: new Date(),
+router.get(
+  "/payments",
+  authenticate,
+  authorize(["admin"]),
+  async (req, res) => {
+    try {
+      const payments = await Payment.findAll({
+        attributes: ["transaction_id", "amount", "payment_status"],
       });
+      res.json(payments);
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  }
+);
 
-      res.status(201).json({ message: 'Review posted successfully', review });
+router.post("/reviews", async (req, res) => {
+  try {
+    const {
+      ride_id,
+      reviewer_id,
+      reviewee_id,
+      rating,
+      review_text,
+      review_type,
+    } = req.body;
+    console.log(req.body);
+    if (!ride_id || !reviewer_id || !reviewee_id || !rating || !review_type) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+
+    const review = await Review.create({
+      ride_id,
+      reviewer_id,
+      reviewee_id,
+      rating,
+      review_text,
+      review_type,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    res.status(201).json({ message: "Review posted successfully", review });
   } catch (error) {
-      res.status(500).json({ error: error.message });
+    res.status(500).json({ error: error.message });
   }
 });
-
 
 router.post("/update-payment", async (req, res) => {
   try {

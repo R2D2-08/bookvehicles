@@ -122,7 +122,7 @@ const DriverDashboard = () => {
   const [locationError, setLocationError] = useState(false);
   const [rideId, setRideId] = useState(null);
   const [revieweeId, setRevieweeId] = useState(null);
-  
+
   const socketRef = useRef(null);
   const locationIntervalRef = useRef(null);
   const locationErrorCount = useRef(0);
@@ -163,12 +163,12 @@ const DriverDashboard = () => {
   useEffect(() => {
     if (!driverId) return;
 
-    const socket = io("http://localhost:5000", { 
+    const socket = io("http://localhost:5000", {
       withCredentials: true,
-      transports: ['polling', 'websocket'], // Start with polling first, then upgrade to websocket
+      transports: ["polling", "websocket"], // Start with polling first, then upgrade to websocket
       reconnection: true,
       reconnectionAttempts: 5,
-      reconnectionDelay: 1000
+      reconnectionDelay: 1000,
     });
     socketRef.current = socket;
 
@@ -176,7 +176,7 @@ const DriverDashboard = () => {
       console.log("Connected to server with socket ID:", socket.id);
       // Register with driverId
       socket.emit("driver_register", { driverId });
-      
+
       // Check for active ride in localStorage
       const savedActiveRide = localStorage.getItem("activeRide");
       if (savedActiveRide) {
@@ -191,21 +191,21 @@ const DriverDashboard = () => {
         }
       }
     });
-    
+
     socket.on("connect_error", (error) => {
       console.error("Socket connection error:", error);
       toast.error("Connection issue - retrying...");
     });
-    
+
     socket.on("reconnect", (attemptNumber) => {
       console.log(`Reconnected after ${attemptNumber} attempts`);
       // Re-register with driverId on reconnect
       socket.emit("driver_register", { driverId });
-      
+
       // Also try to reconnect to any active ride
       socket.emit("reconnect_driver", { driverId });
     });
-    
+
     // Handle ride status updates (new handler)
     socket.on("ride_status", (rideData) => {
       console.log("Received ride status update:", rideData);
@@ -216,9 +216,9 @@ const DriverDashboard = () => {
           name: "Passenger", // Use default name if real name not available
           phone: "Contact through app", // Use default phone if not available
           pickup: rideData.pickup,
-          dropoff: rideData.dropoff
+          dropoff: rideData.dropoff,
         });
-        
+
         toast.info("Reconnected to your active ride!");
       }
     });
@@ -242,11 +242,11 @@ const DriverDashboard = () => {
     };
 
     socket.on("new_ride_request", handleNewRideRequest);
-    
+
     // Add handler for ride_taken event to remove requests taken by other drivers
     socket.on("ride_taken", (requestId) => {
       console.log(`Ride ${requestId} taken by another driver`);
-      setRideRequests(prev => prev.filter(req => req.id !== requestId));
+      setRideRequests((prev) => prev.filter((req) => req.id !== requestId));
     });
 
     return () => {
@@ -269,24 +269,24 @@ const DriverDashboard = () => {
             if (locationError) setLocationError(false);
 
             const { latitude, longitude } = coords;
-            
+
             // Standardize location format to lat/lng
             const locationData = {
               lat: latitude,
-              lng: longitude
+              lng: longitude,
             };
-            
+
             // Send update_location event
             socketRef.current.emit("update_location", locationData);
-            
+
             // If this driver has an active ride, also send driver_location event
             if (activeRide) {
               socketRef.current.emit("driver_location", {
                 driverId,
-                ...locationData
+                ...locationData,
               });
             }
-            
+
             console.log(`Location updated: ${latitude}, ${longitude}`);
           },
           (error) => {
@@ -294,15 +294,19 @@ const DriverDashboard = () => {
             const errorMessages = {
               1: "Permission denied. Please enable location access.",
               2: "Position unavailable. GPS signal may be weak.",
-              3: "Location request timed out."
+              3: "Location request timed out.",
             };
-            
-            const errorMessage = errorMessages[error.code] || "Unknown error getting location";
-            console.error(`Geolocation error (${error.code}): ${errorMessage}`, error);
-            
+
+            const errorMessage =
+              errorMessages[error.code] || "Unknown error getting location";
+            console.error(
+              `Geolocation error (${error.code}): ${errorMessage}`,
+              error
+            );
+
             // Track consecutive errors
             locationErrorCount.current += 1;
-            
+
             // If we've had multiple consecutive errors, show a warning
             if (locationErrorCount.current >= 3 && !locationError) {
               setLocationError(true);
@@ -311,13 +315,13 @@ const DriverDashboard = () => {
                 { duration: 6000 }
               );
             }
-            
+
             // We'll still continue trying in the next interval
           },
-          { 
-            enableHighAccuracy: true, 
-            timeout: 10000,       // Increased timeout (10s instead of 5s)
-            maximumAge: 30000     // Allow using a cached position up to 30 seconds old
+          {
+            enableHighAccuracy: true,
+            timeout: 10000, // Increased timeout (10s instead of 5s)
+            maximumAge: 30000, // Allow using a cached position up to 30 seconds old
           }
         );
       }
@@ -327,7 +331,7 @@ const DriverDashboard = () => {
     if (locationIntervalRef.current) {
       clearInterval(locationIntervalRef.current);
     }
-    
+
     // Set up new interval
     locationIntervalRef.current = setInterval(sendLocation, 5000);
 
@@ -357,30 +361,30 @@ const DriverDashboard = () => {
     }
 
     console.log(`Accepting ride request ${id} as driver ${driverId}`);
-    
+
     // Find the ride in our requests array
     const acceptedRide = rideRequests.find((req) => req.id === id);
     if (acceptedRide) {
       // Update UI state
       setActiveRide(acceptedRide);
-      setRideRequests(rideRequests.filter(req => req.id !== id));
+      setRideRequests(rideRequests.filter((req) => req.id !== id));
 
       // Send the accept_ride event to the server
       socketRef.current.emit("accept_ride", {
         driverId: driverId,
-        requestId: id
+        requestId: id,
       });
-      
+
       console.log(`Sent accept_ride event to server for request ${id}`);
-      
+
       // Keep the activeTab as "notifications" since that's where active rides are displayed
-      
+
       toast.success("Ride accepted! Waiting for passenger...");
-      
+
       // Store in localStorage for persistence
       localStorage.setItem("activeRideId", id);
       localStorage.setItem("activeRide", JSON.stringify(acceptedRide));
-      
+
       // Immediately start sending location updates for this ride
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
@@ -398,19 +402,25 @@ const DriverDashboard = () => {
             const errorMessages = {
               1: "Permission denied. Please enable location access.",
               2: "Position unavailable. GPS signal may be weak.",
-              3: "Location request timed out."
+              3: "Location request timed out.",
             };
-            
-            const errorMessage = errorMessages[error.code] || "Unknown error getting location";
-            console.error(`Geolocation error (${error.code}): ${errorMessage}`, error);
-            
+
+            const errorMessage =
+              errorMessages[error.code] || "Unknown error getting location";
+            console.error(
+              `Geolocation error (${error.code}): ${errorMessage}`,
+              error
+            );
+
             // The ride is still accepted, we just couldn't get the initial location
-            toast.warning("Could not send initial location. Make sure location access is enabled.");
+            toast.warning(
+              "Could not send initial location. Make sure location access is enabled."
+            );
           },
-          { 
-            enableHighAccuracy: true, 
+          {
+            enableHighAccuracy: true,
             timeout: 10000,
-            maximumAge: 30000
+            maximumAge: 30000,
           }
         );
       }
@@ -427,25 +437,31 @@ const DriverDashboard = () => {
 
   const notifyPassenger = () => {
     if (!socketRef.current || !activeRide || !driverId) {
-      console.error("Cannot notify passenger: missing socket, ride details, or driver ID");
+      console.error(
+        "Cannot notify passenger: missing socket, ride details, or driver ID"
+      );
       toast.error("Cannot notify passenger. Please try again.");
       return;
     }
-    
+
     console.log(`Notifying passenger for ride ${activeRide.id}`);
-    
+
     // Emit the driver_arrived event to the server with detailed logs
     try {
       socketRef.current.emit("driver_arrived", {
         requestId: activeRide.id,
         driverId: driverId,
-        redirectPassenger: true // Add this flag to explicitly request passenger redirection
+        redirectPassenger: true, // Add this flag to explicitly request passenger redirection
       });
-      console.log(`Successfully emitted driver_arrived event for ride ${activeRide.id}`);
-      
+      console.log(
+        `Successfully emitted driver_arrived event for ride ${activeRide.id}`
+      );
+
       // Update local state
       setRideOngoing(true);
-      toast.success("Passenger has been notified of your arrival and will be redirected to the ride page!");
+      toast.success(
+        "Passenger has been notified of your arrival and will be redirected to the ride page!"
+      );
     } catch (error) {
       console.error("Error sending driver_arrived event:", error);
       toast.error("Failed to notify passenger. Please try again.");
@@ -454,25 +470,31 @@ const DriverDashboard = () => {
 
   const endJourney = () => {
     if (!socketRef.current || !activeRide || !driverId) {
-      console.error("Cannot end journey: missing socket, ride details, or driver ID");
+      console.error(
+        "Cannot end journey: missing socket, ride details, or driver ID"
+      );
       toast.error("Cannot end journey. Please try again.");
       return;
     }
-    
+
     console.log(`Ending journey for ride ${activeRide.id}`);
-    
+
     // Emit the end_journey event to the server with detailed logs
     try {
       socketRef.current.emit("end_journey", {
         requestId: activeRide.id,
-        driverId: driverId
+        driverId: driverId,
       });
-      console.log(`Successfully emitted end_journey event for ride ${activeRide.id}`);
-      
+      console.log(
+        `Successfully emitted end_journey event for ride ${activeRide.id}`
+      );
+
       // Show review modal
-    setShowReviewModal(true);
-      toast.success("Journey ended successfully! The passenger will be redirected to payment.");
-      
+      setShowReviewModal(true);
+      toast.success(
+        "Journey ended successfully! The passenger will be redirected to payment."
+      );
+
       // Clean up local storage
       localStorage.removeItem("activeRide");
       localStorage.removeItem("activeRideId");
@@ -483,12 +505,11 @@ const DriverDashboard = () => {
   };
 
   const submitReview = async () => {
-    
     if (!rideId || !revieweeId || rating === 0 || review.trim() === "") {
       alert("Please provide a rating and review.");
       return;
     }
-    
+
     const reviewerId = localStorage.getItem("userId") || 2;
     if (!reviewerId) {
       alert("User not logged in.");
@@ -576,281 +597,320 @@ const DriverDashboard = () => {
         {/* Location Error Warning Banner */}
         {locationError && (
           <div className="mb-4 p-3 bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 rounded-lg flex items-center">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-5 w-5 mr-2"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path
+                fillRule="evenodd"
+                d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                clipRule="evenodd"
+              />
             </svg>
-            Location issues detected. Please ensure location services are enabled for accurate ride information.
+            Location issues detected. Please ensure location services are
+            enabled for accurate ride information.
           </div>
         )}
-        
-      {activeTab === "profile" && (
-  <div className="max-w-4xl mx-auto p-6">
-    <div className="bg-gradient-to-br from-white to-gray-50 rounded-2xl shadow-lg border border-gray-100">
-      {/* Profile Header */}
-      <div className="px-8 py-6 border-b border-gray-100">
-        <h2 className="text-3xl font-bold text-gray-900">Driver Profile</h2>
-        <p className="text-gray-500 mt-1">Manage your account information</p>
-      </div>
 
-      {/* Profile Content */}
-      <div className="p-8">
-        <div className="flex flex-col md:flex-row gap-8 items-start">
-          {/* Profile Image */}
-          <div className="relative group">
-            <div className="w-32 h-32 rounded-full border-4 border-white shadow-lg overflow-hidden">
-              <Image
-                src="/images/avatar-placeholder.jpg"
-                alt="Profile"
-                width={128}
-                height={128}
-                className="object-cover hover:scale-105 transition-transform"
-                priority
-              />
-            </div>
-            <button className="absolute bottom-0 right-0 bg-blue-500 text-white p-2 rounded-full shadow-md hover:bg-blue-600 transition-colors">
-              <Edit className="w-4 h-4" />
-            </button>
-          </div>
+        {activeTab === "profile" && (
+          <div className="max-w-4xl mx-auto p-6">
+            <div className="bg-gradient-to-br from-white to-gray-50 rounded-2xl shadow-lg border border-gray-100">
+              {/* Profile Header */}
+              <div className="px-8 py-6 border-b border-gray-100">
+                <h2 className="text-3xl font-bold text-gray-900">
+                  Driver Profile
+                </h2>
+                <p className="text-gray-500 mt-1">
+                  Manage your account information
+                </p>
+              </div>
 
-          {/* Basic Info */}
-          <div className="space-y-2">
-            <h3 className="text-2xl font-bold text-gray-900">John Driver</h3>
-            <div className="flex items-center gap-2 text-gray-600">
-              <BadgeCheck className="w-5 h-5 text-green-500" />
-              <span>Verified Driver</span>
-            </div>
-            <div className="flex items-center gap-2 text-gray-600">
-              <Star className="w-5 h-5 text-yellow-500" />
-              <span>4.9/5.0 Rating (127 trips)</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Details Grid */}
-        <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Contact Information */}
-          <div className="bg-gray-50 p-6 rounded-xl">
-            <h4 className="text-lg font-semibold mb-4 flex items-center gap-2">
-              <UserCircle className="w-6 h-6 text-blue-500" />
-              Contact Information
-            </h4>
-            <div className="space-y-3">
-              <div className="flex items-center gap-3">
-                <Mail className="w-5 h-5 text-gray-500" />
-                <span className="text-gray-700">john.driver@example.com</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <Phone className="w-5 h-5 text-gray-500" />
-                <span className="text-gray-700">+1 (555) 123-4567</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <MapPin className="w-5 h-5 text-gray-500" />
-                <span className="text-gray-700">New York, USA</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Driver Information */}
-          <div className="bg-gray-50 p-6 rounded-xl">
-            <h4 className="text-lg font-semibold mb-4 flex items-center gap-2">
-              <ClipboardList className="w-6 h-6 text-green-500" />
-              Driver Information
-            </h4>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <p className="text-sm text-gray-500">License Number</p>
-                <p className="font-medium">D123-4567-890</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">Expiry Date</p>
-                <p className="font-medium">2025-12-31</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">Years Driving</p>
-                <p className="font-medium">8 years</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">Trips Completed</p>
-                <p className="font-medium">247</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Vehicle Information */}
-          <div className="md:col-span-2 bg-gray-50 p-6 rounded-xl">
-            <h4 className="text-lg font-semibold mb-4 flex items-center gap-2">
-              <Car className="w-6 h-6 text-red-500" />
-              Vehicle Information
-            </h4>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div>
-                <p className="text-sm text-gray-500">Make & Model</p>
-                <p className="font-medium">Ferrari R-800</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">License Plate</p>
-                <p className="font-medium">ABC-1234</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">Color</p>
-                <p className="font-medium">Rosso Corsa</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">Year</p>
-                <p className="font-medium">2023</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-)}
-
-        {activeTab === "car" && (
-  <div className="flex flex-col lg:flex-row justify-center items-center h-full gap-8 p-6 bg-gradient-to-br from-gray-50 to-gray-100">
-    {/* Image Section with Hover Effect */}
-    <div className="flex-1 flex justify-center max-w-2xl transform transition-transform duration-500 hover:scale-105">
-      <div className="relative rounded-2xl overflow-hidden shadow-2xl border-8 border-white">
-        <Image
-          src="/images/car.webp"
-          alt="Driver's Car"
-          width={800}
-          height={500}
-          className="object-cover"
-          priority
-        />
-        <div className="absolute bottom-4 left-4 bg-red-600 text-white px-4 py-2 rounded-full text-sm font-bold">
-          PREMIUM CLASS
-        </div>
-      </div>
-    </div>
-
-    {/* Details Section */}
-    <div className="flex-1 max-w-xl bg-gradient-to-br from-white to-gray-50 p-8 rounded-2xl shadow-2xl border border-gray-100">
-      <div className="space-y-6">
-        <h2 className="text-3xl font-extrabold text-gray-900 border-l-4 border-red-600 pl-4">
-          Vehicle Details
-        </h2>
-        
-        <div className="space-y-4">
-          <h3 className="text-2xl font-bold bg-gradient-to-r from-red-600 to-orange-500 bg-clip-text text-transparent">
-            Ferrari R-800
-          </h3>
-          
-          <div className="grid grid-cols-2 gap-4">
-            <div className="flex items-center space-x-2">
-              <CarIcon className="w-5 h-5 text-red-600" />
-              <div>
-                <p className="text-sm text-gray-500">Type</p>
-                <p className="font-medium text-gray-800">Sedan</p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-2">
-              <LicensePlateIcon className="w-5 h-5 text-red-600" />
-              <div>
-                <p className="text-sm text-gray-500">License Plate</p>
-                <p className="font-medium text-gray-800">ABC-1234</p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-2">
-              <PaintBucketIcon className="w-5 h-5 text-red-600" />
-              <div>
-                <p className="text-sm text-gray-500">Color</p>
-                <p className="font-medium text-gray-800">Rosso Corsa</p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-2">
-              <UserGroupIcon className="w-5 h-5 text-red-600" />
-              <div>
-                <p className="text-sm text-gray-500">Seats</p>
-                <p className="font-medium text-gray-800">4 Available</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-6 p-4 bg-red-50 rounded-lg border border-red-100">
-            <p className="text-sm text-gray-700 italic">
-              ★★★★★ (4.9/5.0 Rating)<br />
-              "Impeccably maintained with premium leather interior, dual-zone climate control, 
-              and advanced safety features. Experience luxury performance at its finest."
-            </p>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-)}
-
-{activeTab === "notifications" && !activeRide && (
-  <div className="max-w-4xl mx-auto p-6">
-    <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
-      <div className="px-6 py-4 border-b border-gray-100">
-        <h2 className="text-2xl font-bold text-gray-800">Ride Requests</h2>
-        <p className="text-gray-500 text-sm mt-1">Recent ride requests from passengers</p>
-      </div>
-      
-      {rideRequests.length > 0 ? (
-        <div className="divide-y divide-gray-100">
-          {rideRequests.map((request) => (
-            <div key={request.id} className="p-6 hover:bg-gray-50 transition-colors">
-              <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-center">
-                {/* Location Details */}
-                <div className="md:col-span-2">
-                  <div className="flex items-center gap-3">
-                    <div className="bg-blue-100 p-2 rounded-lg">
-                      <MapPin className="w-5 h-5 text-blue-600" />
+              {/* Profile Content */}
+              <div className="p-8">
+                <div className="flex flex-col md:flex-row gap-8 items-start">
+                  {/* Profile Image */}
+                  <div className="relative group">
+                    <div className="w-32 h-32 rounded-full border-4 border-white shadow-lg overflow-hidden">
+                      <Image
+                        src="/images/avatar-placeholder.jpg"
+                        alt="Profile"
+                        width={128}
+                        height={128}
+                        className="object-cover hover:scale-105 transition-transform"
+                        priority
+                      />
                     </div>
-                    <div>
-                      <p className="font-semibold text-gray-800">{request.pickup}</p>
-                      <p className="text-sm text-gray-500">to {request.dropoff}</p>
+                    <button className="absolute bottom-0 right-0 bg-blue-500 text-white p-2 rounded-full shadow-md hover:bg-blue-600 transition-colors">
+                      <Edit className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  {/* Basic Info */}
+                  <div className="space-y-2">
+                    <h3 className="text-2xl font-bold text-gray-900">
+                      John Driver
+                    </h3>
+                    <div className="flex items-center gap-2 text-gray-600">
+                      <BadgeCheck className="w-5 h-5 text-green-500" />
+                      <span>Verified Driver</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-gray-600">
+                      <Star className="w-5 h-5 text-yellow-500" />
+                      <span>4.9/5.0 Rating (127 trips)</span>
                     </div>
                   </div>
                 </div>
 
-                {/* Fare & Time */}
-                <div className="space-y-1">
-                  <p className="text-sm text-gray-500">Fare</p>
-                  <p className="font-medium text-green-600">${request.fare}</p>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-sm text-gray-500">Requested</p>
-                  <p className="text-sm font-medium text-gray-800">{request.time}</p>
-                </div>
+                {/* Details Grid */}
+                <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Contact Information */}
+                  <div className="bg-gray-50 p-6 rounded-xl">
+                    <h4 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                      <UserCircle className="w-6 h-6 text-blue-500" />
+                      Contact Information
+                    </h4>
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-3">
+                        <Mail className="w-5 h-5 text-gray-500" />
+                        <span className="text-gray-700">
+                          john.driver@example.com
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <Phone className="w-5 h-5 text-gray-500" />
+                        <span className="text-gray-700">+1 (555) 123-4567</span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <MapPin className="w-5 h-5 text-gray-500" />
+                        <span className="text-gray-700">New York, USA</span>
+                      </div>
+                    </div>
+                  </div>
 
-                {/* Actions */}
-                <div className="flex gap-3 justify-end">
-                  <button
-                    onClick={() => handleAccept(request.id)}
-                    className="flex items-center gap-2 px-4 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors"
-                  >
-                    <CheckCircle className="w-5 h-5" />
-                    <span>Accept</span>
-                  </button>
-                  <button
-                    onClick={() => handleReject(request.id)}
-                    className="flex items-center gap-2 px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors"
-                  >
-                    <XCircle className="w-5 h-5" />
-                    <span>Reject</span>
-                  </button>
+                  {/* Driver Information */}
+                  <div className="bg-gray-50 p-6 rounded-xl">
+                    <h4 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                      <ClipboardList className="w-6 h-6 text-green-500" />
+                      Driver Information
+                    </h4>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-sm text-gray-500">License Number</p>
+                        <p className="font-medium">D123-4567-890</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">Expiry Date</p>
+                        <p className="font-medium">2025-12-31</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">Years Driving</p>
+                        <p className="font-medium">8 years</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">Trips Completed</p>
+                        <p className="font-medium">247</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Vehicle Information */}
+                  <div className="md:col-span-2 bg-gray-50 p-6 rounded-xl">
+                    <h4 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                      <Car className="w-6 h-6 text-red-500" />
+                      Vehicle Information
+                    </h4>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div>
+                        <p className="text-sm text-gray-500">Make & Model</p>
+                        <p className="font-medium">Ferrari R-800</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">License Plate</p>
+                        <p className="font-medium">ABC-1234</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">Color</p>
+                        <p className="font-medium">Rosso Corsa</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">Year</p>
+                        <p className="font-medium">2023</p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
-          ))}
-        </div>
-      ) : (
-        <div className="py-12 text-center">
-          <div className="max-w-md mx-auto">
-            <Bell className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900">No requests available</h3>
-            <p className="mt-1 text-sm text-gray-500">New ride requests will appear here automatically</p>
           </div>
-        </div>
-      )}
-    </div>
-  </div>
-)}
+        )}
+
+        {activeTab === "car" && (
+          <div className="flex flex-col lg:flex-row justify-center items-center h-full gap-8 p-6 bg-gradient-to-br from-gray-50 to-gray-100">
+            {/* Image Section with Hover Effect */}
+            <div className="flex-1 flex justify-center max-w-2xl transform transition-transform duration-500 hover:scale-105">
+              <div className="relative rounded-2xl overflow-hidden shadow-2xl border-8 border-white">
+                <Image
+                  src="/images/car.webp"
+                  alt="Driver's Car"
+                  width={800}
+                  height={500}
+                  className="object-cover"
+                  priority
+                />
+                <div className="absolute bottom-4 left-4 bg-red-600 text-white px-4 py-2 rounded-full text-sm font-bold">
+                  PREMIUM CLASS
+                </div>
+              </div>
+            </div>
+
+            {/* Details Section */}
+            <div className="flex-1 max-w-xl bg-gradient-to-br from-white to-gray-50 p-8 rounded-2xl shadow-2xl border border-gray-100">
+              <div className="space-y-6">
+                <h2 className="text-3xl font-extrabold text-gray-900 border-l-4 border-red-600 pl-4">
+                  Vehicle Details
+                </h2>
+
+                <div className="space-y-4">
+                  <h3 className="text-2xl font-bold bg-gradient-to-r from-red-600 to-orange-500 bg-clip-text text-transparent">
+                    Ferrari R-800
+                  </h3>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="flex items-center space-x-2">
+                      <CarIcon className="w-5 h-5 text-red-600" />
+                      <div>
+                        <p className="text-sm text-gray-500">Type</p>
+                        <p className="font-medium text-gray-800">Sedan</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <LicensePlateIcon className="w-5 h-5 text-red-600" />
+                      <div>
+                        <p className="text-sm text-gray-500">License Plate</p>
+                        <p className="font-medium text-gray-800">ABC-1234</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <PaintBucketIcon className="w-5 h-5 text-red-600" />
+                      <div>
+                        <p className="text-sm text-gray-500">Color</p>
+                        <p className="font-medium text-gray-800">Rosso Corsa</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <UserGroupIcon className="w-5 h-5 text-red-600" />
+                      <div>
+                        <p className="text-sm text-gray-500">Seats</p>
+                        <p className="font-medium text-gray-800">4 Available</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-6 p-4 bg-red-50 rounded-lg border border-red-100">
+                    <p className="text-sm text-gray-700 italic">
+                      ★★★★★ (4.9/5.0 Rating)
+                      <br />
+                      &quot;Impeccably maintained with premium leather interior,
+                      dual-zone climate control, and advanced safety features.
+                      Experience luxury performance at its finest.&quot;
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === "notifications" && !activeRide && (
+          <div className="max-w-4xl mx-auto p-6">
+            <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+              <div className="px-6 py-4 border-b border-gray-100">
+                <h2 className="text-2xl font-bold text-gray-800">
+                  Ride Requests
+                </h2>
+                <p className="text-gray-500 text-sm mt-1">
+                  Recent ride requests from passengers
+                </p>
+              </div>
+
+              {rideRequests.length > 0 ? (
+                <div className="divide-y divide-gray-100">
+                  {rideRequests.map((request) => (
+                    <div
+                      key={request.id}
+                      className="p-6 hover:bg-gray-50 transition-colors"
+                    >
+                      <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-center">
+                        {/* Location Details */}
+                        <div className="md:col-span-2">
+                          <div className="flex items-center gap-3">
+                            <div className="bg-blue-100 p-2 rounded-lg">
+                              <MapPin className="w-5 h-5 text-blue-600" />
+                            </div>
+                            <div>
+                              <p className="font-semibold text-gray-800">
+                                {request.pickup}
+                              </p>
+                              <p className="text-sm text-gray-500">
+                                to {request.dropoff}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Fare & Time */}
+                        <div className="space-y-1">
+                          <p className="text-sm text-gray-500">Fare</p>
+                          <p className="font-medium text-green-600">
+                            ${request.fare}
+                          </p>
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-sm text-gray-500">Requested</p>
+                          <p className="text-sm font-medium text-gray-800">
+                            {request.time}
+                          </p>
+                        </div>
+
+                        {/* Actions */}
+                        <div className="flex gap-3 justify-end">
+                          <button
+                            onClick={() => handleAccept(request.id)}
+                            className="flex items-center gap-2 px-4 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors"
+                          >
+                            <CheckCircle className="w-5 h-5" />
+                            <span>Accept</span>
+                          </button>
+                          <button
+                            onClick={() => handleReject(request.id)}
+                            className="flex items-center gap-2 px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors"
+                          >
+                            <XCircle className="w-5 h-5" />
+                            <span>Reject</span>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="py-12 text-center">
+                  <div className="max-w-md mx-auto">
+                    <Bell className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-gray-900">
+                      No requests available
+                    </h3>
+                    <p className="mt-1 text-sm text-gray-500">
+                      New ride requests will appear here automatically
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Ride in Progress */}
         {activeTab === "notifications" && activeRide && (

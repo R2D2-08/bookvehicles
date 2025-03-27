@@ -310,7 +310,7 @@ export default function LiveETA() {
                 position={[driverLocation.lat, driverLocation.lng]}
                 icon={customIcon}
               >
-                <Popup>Driver's Location</Popup>
+                <Popup>Driver&apos;s Location</Popup>
               </Marker>
             )}
 
@@ -334,7 +334,7 @@ export default function LiveETA() {
           onClick={handleRideStarted}
           className="w-full py-3 bg-black text-white font-medium rounded-lg"
         >
-          I've Met My Driver
+          I&apos;ve Met My Driver
         </button>
       </div>
     </div>

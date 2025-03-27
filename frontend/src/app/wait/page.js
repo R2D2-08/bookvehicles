@@ -119,7 +119,7 @@ function WaitPage() {
               Searching for a Driver...
             </h1>
             <p className="font-light text-gray-500 mb-6 text-center">
-              Hang tight! We're looking for available drivers near you.
+              Hang tight! We&apos;re looking for available drivers near you.
             </p>
             <div className="w-full h-3 bg-gray-300 rounded-full overflow-hidden mb-4">
               <div
@@ -137,8 +137,8 @@ function WaitPage() {
               No Drivers Available
             </p>
             <p className="text-gray-600 mb-6">
-              We couldn't find any drivers nearby. You can try again or modify
-              your request.
+              We couldn&apos;t find any drivers nearby. You can try again or
+              modify your request.
             </p>
             <div className="flex gap-4">
               <button
