@@ -13,8 +13,11 @@ import {
   FaPaypal 
 } from "react-icons/fa";
 import { GiCheckMark } from "react-icons/gi";
+import { useRouter } from "next/navigation";
+
 
 export default function PaymentPage() {
+  const router = useRouter();
   const [rating, setRating] = useState(0);
   const [review, setReview] = useState("");
   const [paymentDone, setPaymentDone] = useState(false);
@@ -109,6 +112,7 @@ export default function PaymentPage() {
       review_text: review,
       review_type: "driver",
     };
+    console.log(payload);
 
     try {
       const response = await fetch("http://localhost:5000/api/users/reviews", {
@@ -127,6 +131,7 @@ export default function PaymentPage() {
       console.error("Error submitting review:", error);
       alert("Something went wrong.");
     }
+    router.push("/booking");
   };
 
   return (
