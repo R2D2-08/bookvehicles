@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useRef } from "react";
 import { Car, Compass, Bike } from "lucide-react";
 import { useRouter } from "next/navigation";
 import io from "socket.io-client";
@@ -62,6 +62,9 @@ const SelectRide = () => {
   const [pickCoordinates, setPickCoordinates] = useState(null);
   const [dropCoordinates, setDropCoordinates] = useState(null);
   const [id, setId] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [rideRequested, setRideRequested] = useState(false);
+  const socketRef = useRef(null);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -74,7 +77,9 @@ const SelectRide = () => {
     }
   }, []);
 
+  // Set up socket connection and event listeners
   useEffect(() => {
+    // Get user ID for ride request
     fetch("http://localhost:5000/api/users/id", {
       method: "GET",
       credentials: "include",
@@ -82,23 +87,76 @@ const SelectRide = () => {
       .then((res) => res.json())
       .then((data) => {
         setId(data.id);
+        // Store user ID in localStorage for other components to use
+        localStorage.setItem("userId", data.id);
       })
       .catch((err) => console.error("Error fetching ID:", err));
-    const socket = io("http://localhost:5000", { withCredentials: true });
 
-    socket.on("ride_accepted", ({ driverId }) => {
-      console.log("Received ride_accepted event from server");
-      console.log("Driver ID:", driverId);
-      toast.success(`Ride accepted by Driver ${driverId}`);
-      router.push("/eta");
+    // Set up socket connection
+    const socket = io("http://localhost:5000", { 
+      withCredentials: true,
+      transports: ['polling', 'websocket'],  // Start with polling first, then upgrade to websocket
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000
+    });
+    socketRef.current = socket;
+
+    // Debug connection events
+    socket.on("connect", () => {
+      console.log("Connected to socket server with ID:", socket.id);
+      
+      // Re-register user ID with socket on connect/reconnect
+      if (id) {
+        socket.emit("register_rider", { userId: id });
+        console.log("Registered rider ID with socket:", id);
+      }
     });
 
-    socket.on("connect_error", () => {
-      toast.error("Failed to connect to the server");
+    socket.on("connect_error", (error) => {
+      console.error("Socket connection error:", error);
+      toast.error("Connection issue - retrying...");
     });
 
-    return () => socket.disconnect();
-  }, []);
+    socket.on("reconnect", (attemptNumber) => {
+      console.log(`Reconnected to server after ${attemptNumber} attempts`);
+      // Re-register user ID with socket on reconnect
+      if (id) {
+        socket.emit("register_rider", { userId: id });
+        console.log("Re-registered rider ID with socket after reconnect:", id);
+      }
+    });
+
+    // Handle ride accepted event
+    socket.on("ride_accepted", (data) => {
+      console.log("Ride accepted event received:", data);
+      
+      // Store driver information in localStorage for the ETA page
+      if (data.driverId) {
+        localStorage.setItem("driverId", data.driverId);
+        localStorage.setItem("requestId", data.requestId);
+        
+        toast.success(`Your ride has been accepted!`);
+        
+        // Navigate to the ETA page
+        setTimeout(() => {
+          router.push("/eta");
+        }, 1000);
+      }
+    });
+
+    // Handle driver location updates
+    socket.on("driver_location_update", (location) => {
+      console.log("Driver location update received:", location);
+      localStorage.setItem("driverLocation", JSON.stringify(location));
+    });
+
+    // Clean up on component unmount
+    return () => {
+      console.log("Disconnecting socket");
+      socket.disconnect();
+    };
+  }, [router]);
 
   const distance = useMemo(() => {
     return pickCoordinates && dropCoordinates
@@ -121,12 +179,21 @@ const SelectRide = () => {
   }, [selected, distance]);
 
   const sendBookingRequest = () => {
-    if (!pickCoordinates || !dropCoordinates) return;
+    if (!pickCoordinates || !dropCoordinates || !id) {
+      toast.error("Missing information for booking");
+      return;
+    }
 
+    if (!socketRef.current || !socketRef.current.connected) {
+      toast.error("Not connected to server. Please refresh the page.");
+      return;
+    }
+
+    setLoading(true);
     localStorage.setItem("ridePrice", JSON.stringify(estimatedPrice));
 
-    const socket = io("http://localhost:5000");
-    socket.emit("book_request", {
+    // Emit book_request event
+    socketRef.current.emit("book_request", {
       rideType: selected,
       id: id,
       pickLoc,
@@ -137,6 +204,12 @@ const SelectRide = () => {
       distance: distance / 1000,
       booking_date: new Date().toISOString(),
     });
+
+    toast.success("Ride request sent! Waiting for driver...");
+    setRideRequested(true);
+    
+    // Redirect to wait page
+    router.push("/wait");
   };
 
   return (
@@ -193,10 +266,11 @@ const SelectRide = () => {
             Back
           </button>
           <button
-            className="py-2 px-3 border border-black rounded-md"
+            className={`py-2 px-3 ${loading ? 'bg-gray-400' : 'bg-black'} text-white rounded-md`}
             onClick={sendBookingRequest}
+            disabled={loading || rideRequested}
           >
-            Continue
+            {loading ? "Requesting..." : "Continue"}
           </button>
         </div>
       </div>
