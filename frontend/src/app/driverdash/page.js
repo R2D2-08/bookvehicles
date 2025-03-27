@@ -824,9 +824,9 @@ const DriverDashboard = () => {
                     <p className="text-sm text-gray-700 italic">
                       ★★★★★ (4.9/5.0 Rating)
                       <br />
-                      "Impeccably maintained with premium leather interior,
+                      &quot;Impeccably maintained with premium leather interior,
                       dual-zone climate control, and advanced safety features.
-                      Experience luxury performance at its finest."
+                      Experience luxury performance at its finest.&quot;
                     </p>
                   </div>
                 </div>
