@@ -192,6 +192,28 @@ export default function LiveETA() {
       }
     });
 
+    // Listen for driver arrival notification
+    socket.on("driver_arrived", (data) => {
+      console.log("Driver has arrived notification received:", data);
+      
+      // Store relevant data
+      if (data.requestId) {
+        localStorage.setItem("activeRequestId", data.requestId);
+      }
+      
+      // Show toast notification
+      toast.success("Your driver has arrived at the pickup location!", {
+        description: "You will be redirected to the ride page shortly."
+      });
+      
+      // Redirect to ride page
+      if (data.shouldRedirect) {
+        setTimeout(() => {
+          router.push("/ride");
+        }, 2000); // Give user 2 seconds to see the toast before redirecting
+      }
+    });
+
     // Cleanup on unmount
     return () => {
       clearInterval(interval);
