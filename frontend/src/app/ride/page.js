@@ -10,23 +10,23 @@ export default function RidePage() {
   const socketRef = useRef(null);
   const [journeyStarted, setJourneyStarted] = useState(true);
   const [journeyTimeLeft, setJourneyTimeLeft] = useState(600); // 10 minutes by default
-  
+
   // Set up socket connection
   useEffect(() => {
     // Set up socket connection
-    const socket = io("http://localhost:5000", { 
+    const socket = io("http://localhost:5000", {
       withCredentials: true,
-      transports: ['polling', 'websocket'],
+      transports: ["polling", "websocket"],
       reconnection: true,
       reconnectionAttempts: 5,
-      reconnectionDelay: 1000
+      reconnectionDelay: 1000,
     });
-    
+
     socketRef.current = socket;
-    
+
     socket.on("connect", () => {
       console.log("Connected to socket server in ride page");
-      
+
       // Re-register as a rider when connected
       const userId = localStorage.getItem("userId");
       if (userId) {
@@ -34,16 +34,18 @@ export default function RidePage() {
         console.log("Registered rider in ride page, user ID:", userId);
       }
     });
-    
+
     // Listen for journey ended notification
     socket.on("journey_ended", (data) => {
       console.log("Journey ended notification received:", data);
-      
+
       // Show toast notification
       toast.success("Your journey has ended!", {
-        description: `Fare: $${data.fare || '10.00'}. You will be redirected to the payment page.`
+        description: `Fare: $${
+          data.fare || "10.00"
+        }. You will be redirected to the payment page.`,
       });
-      
+
       // Redirect to payment page
       if (data.shouldRedirect && data.redirectTo) {
         setTimeout(() => {
@@ -55,7 +57,7 @@ export default function RidePage() {
         }, 2000);
       }
     });
-    
+
     // Cleanup on unmount
     return () => {
       socket.disconnect();
@@ -73,7 +75,7 @@ export default function RidePage() {
         return prev - 1;
       });
     }, 1000);
-    
+
     return () => clearInterval(journeyInterval);
   }, []);
 
@@ -99,13 +101,17 @@ export default function RidePage() {
         transition={{ duration: 0.5 }}
       >
         <h1 className="text-2xl font-semibold mb-3">Enjoy Your Ride! 🚗</h1>
-        <p className="text-gray-600 mb-6">Your driver is taking you to your destination</p>
-        
+        <p className="text-gray-600 mb-6">
+          Your driver is taking you to your destination
+        </p>
+
         <div className="bg-white p-4 rounded-lg mb-6">
           <p className="text-lg font-medium mb-2">Estimated Time Remaining</p>
-          <p className="text-3xl font-bold text-blue-600">{formatTime(journeyTimeLeft)}</p>
+          <p className="text-3xl font-bold text-blue-600">
+            {formatTime(journeyTimeLeft)}
+          </p>
         </div>
-        
+
         <div className="w-full h-4 bg-gray-200 rounded-full overflow-hidden mb-6">
           <motion.div
             className="h-full bg-blue-500 transition-all"
@@ -114,7 +120,7 @@ export default function RidePage() {
             transition={{ duration: 0.5 }}
           />
         </div>
-        
+
         <p className="text-sm text-gray-500 mb-4">
           Your driver will notify you when you arrive at your destination.
           Payment will be processed automatically after your journey.
