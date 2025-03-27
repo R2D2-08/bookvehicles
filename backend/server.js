@@ -17,6 +17,7 @@ const server = http.createServer(app);
 const { Server } = require("socket.io");
 const adminRoutes = require("./routes/user");
 const Driver = require("./models/Drivers");
+const Vehicle = require("./models/Vehicles");
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 const io = new Server(server, {
   cors: { origin: "http://localhost:3000", credentials: true },
@@ -41,16 +42,18 @@ const PORT = process.env.PORT || 5000;
 const activeDrivers = {};
 const driverLocations = {};
 const booking_requests = {};
+const driverDeails = {};
 
 io.on("connection", (socket) => {
   // Parse cookies to extract the access token
   const cookies = cookie.parse(socket.handshake.headers.cookie || "");
-  const accessToken = cookies.Accesstoken;
-
+  const accessToken = cookies.accessToken;
+  console.log("Access Token:", accessToken);
   if (accessToken) {
     try {
       const decoded = jwt.verify(accessToken, process.env.JWT_SECRET);
-      socket.userId = decoded.userId;
+      console.log("Decoded Token:", decoded);
+      socket.userId = decoded.id;
       console.log(`User connected with ID: ${socket.userId}`);
     } catch (err) {
       console.log("Invalid or expired access token");
@@ -58,9 +61,21 @@ io.on("connection", (socket) => {
   }
 
   // Register driver
-  socket.on("driver_register", () => {
-    activeDrivers[socket.id] = socket;
-    console.log(`Driver ${socket.id} connected`);
+  socket.on("driver_register", async () => {
+    const driverId = socket.userId;
+    if (!driverId) return; // Prevent unnecessary DB queries
+
+    try {
+      const driver = await Driver.findOne({ where: { user_id: driverId } });
+      const vehicle = await Vehicle.findOne({
+        where: { id: driver.vehicle_id },
+      });
+      driverDeails[socket.id] = { driver, vehicle };
+      activeDrivers[socket.id] = socket;
+      console.log(`Driver ${socket.id} connected`);
+    } catch (error) {
+      console.error("Error fetching driver details:", error);
+    }
   });
 
   // Update driver location
@@ -126,7 +141,12 @@ io.on("connection", (socket) => {
       console.log("Booking requests: ", booking_requests);
 
       Object.values(activeDrivers).forEach((driverSocket) => {
-        driverSocket.emit("new_ride_request", { requestId, data });
+        if (
+          driverDeails[driverSocket.id].vehicle.type ===
+          vehicleTypes[data.rideType]
+        ) {
+          driverSocket.emit("new_ride_request", { requestId, data });
+        }
       });
     } catch (error) {
       console.error("Error creating ride:", error);
