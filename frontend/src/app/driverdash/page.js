@@ -120,6 +120,8 @@ const DriverDashboard = () => {
   const [rating, setRating] = useState(0);
   const [review, setReview] = useState("");
   const [locationError, setLocationError] = useState(false);
+  const [rideId, setRideId] = useState(null);
+  const [revieweeId, setRevieweeId] = useState(null);
   
   const socketRef = useRef(null);
   const locationIntervalRef = useRef(null);
@@ -136,6 +138,26 @@ const DriverDashboard = () => {
         setDriverId(data.id);
       })
       .catch((err) => console.error("Error fetching driver ID:", err));
+  }, []);
+
+  useEffect(() => {
+    const fetchRideDetails = async () => {
+      try {
+        const userId = localStorage.getItem("userId") || 2;
+        if (!userId) {
+          console.error("User not logged in.");
+          return;
+        }
+        console.log(userId);
+        setRideId(15);
+        const driverId = localStorage.getItem("driverId") || 1;
+        setRevieweeId(driverId);
+      } catch (error) {
+        console.error("Error fetching ride details:", error);
+      }
+    };
+
+    fetchRideDetails();
   }, []);
 
   useEffect(() => {
@@ -468,7 +490,45 @@ const DriverDashboard = () => {
     }
   };
 
-  const submitReview = () => {
+  const submitReview = async () => {
+    
+    if (!rideId || !revieweeId || rating === 0 || review.trim() === "") {
+      alert("Please provide a rating and review.");
+      return;
+    }
+    
+    const reviewerId = localStorage.getItem("userId") || 2;
+    if (!reviewerId) {
+      alert("User not logged in.");
+      return;
+    }
+
+    const payload = {
+      ride_id: rideId,
+      reviewer_id: reviewerId,
+      reviewee_id: revieweeId,
+      rating,
+      review_text: review,
+      review_type: "driver",
+    };
+    console.log(payload);
+    try {
+      const response = await fetch("http://localhost:5000/api/users/reviews", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (response.ok) {
+        alert("Review Submitted!");
+      } else {
+        const data = await response.json();
+        alert("Error: " + data.message);
+      }
+    } catch (error) {
+      console.error("Error submitting review:", error);
+      alert("Something went wrong.");
+    }
     setShowReviewModal(false);
     setActiveRide(null);
     setRideOngoing(false);
