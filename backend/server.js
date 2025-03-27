@@ -648,7 +648,7 @@ io.on("connection", (socket) => {
         fare: request.data.price,
         message: "Your journey has ended. Please proceed to payment.",
         shouldRedirect: true,
-        redirectTo: "/payment"
+        redirectTo: "/pay"
       });
     } else {
       console.error(`Could not find socket for rider ${riderUserId}`);
