@@ -2,7 +2,7 @@ import { Facebook, Twitter, Instagram } from "lucide-react";
 
 export default function Footer() {
   return (
-    <footer className="w-full bg-black text-white py-6 mt-12">
+    <footer className="w-full bg-black text-white py-6 z-10">
       <div className="max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between px-6">
         <div className="text-center md:text-left">
           <h2 className="text-xl font-semibold">RideShare</h2>

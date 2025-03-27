@@ -6,6 +6,7 @@ import { useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import Link from "next/link";
 import dynamic from "next/dynamic";
+import { useRouter } from "next/navigation";
 
 const MapContainer = dynamic(
   () => import("react-leaflet").then((mod) => mod.MapContainer),
@@ -28,8 +29,24 @@ const Popup = dynamic(() => import("react-leaflet").then((mod) => mod.Popup), {
 export default function Home() {
   const position = [51.505, -0.09];
   const [userLocation, setUserLocation] = useState(null);
+  const [customIcon, setCustomIcon] = useState(null);
+  const router = useRouter();
   useEffect(() => {
     if (typeof window !== undefined && navigator.geolocation) {
+      import("leaflet").then((L) => {
+        setCustomIcon(
+          new L.Icon({
+            iconUrl:
+              "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png",
+            iconSize: [25, 41],
+            iconAnchor: [12, 41],
+            popupAnchor: [1, -34],
+            shadowUrl:
+              "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
+            shadowSize: [41, 41],
+          })
+        );
+      });
       navigator.geolocation.getCurrentPosition(
         (position) => {
           const { latitude, longitude } = position.coords;
@@ -92,7 +109,7 @@ export default function Home() {
             {userLocation && (
               <>
                 <SetView center={userLocation} />
-                <Marker position={userLocation}>
+                <Marker position={userLocation} icon={customIcon}>
                   <Popup>Your Location</Popup>
                 </Marker>
               </>
@@ -133,7 +150,10 @@ export default function Home() {
           <p className="text-lg text-gray-700 mb-6">
             Use your location to find the nearest available ride.
           </p>
-          <button className="rounded-2xl text-white bg-black py-4 px-8 text-lg font-semibold hover:bg-gray-800 transition-all duration-300">
+          <button
+            className="rounded-2xl text-white bg-black py-4 px-8 text-lg font-semibold hover:bg-gray-800 transition-all duration-300"
+            onClick={() => router.push("/booking")}
+          >
             Use My Location
           </button>
         </section>
@@ -147,14 +167,17 @@ export default function Home() {
             Seamless rides, reliable drivers, and effortless booking. Move
             smarter with just a tap.
           </p>
-          <button className="w-full md:w-auto rounded-2xl text-white bg-black py-4 px-8 text-lg font-semibold hover:bg-gray-800 transition-all duration-300">
+          <button
+            className="w-full md:w-auto rounded-2xl text-white bg-black py-4 px-8 text-lg font-semibold hover:bg-gray-800 transition-all duration-300"
+            onClick={() => router.push("/booking")}
+          >
             Book a Ride
           </button>
         </div>
 
-        <div className="relative w-full md:w-[900px] h-[500px] overflow-hidden rounded-xl shadow-2xl">
+        <div className="relative w-full h-[250px] md:w-[900px] md:h-[500px] overflow-hidden rounded-xl shadow-2xl">
           <Image
-            src="/images/ride_sharing_scene.jpg"
+            src="/images/main_1.webp"
             alt="Ride Sharing Scene"
             layout="fill"
             objectFit="cover"
@@ -166,7 +189,7 @@ export default function Home() {
       <section className="flex flex-col md:flex-row items-center gap-12 p-10 max-w-6xl w-[85%]">
         <div className="relative w-full md:w-[900px] h-[500px] overflow-hidden rounded-xl shadow-2xl">
           <Image
-            src="/images/image_converted.jpg"
+            src="/images/main_2.webp"
             alt="Luxury Ride Experience"
             layout="fill"
             objectFit="cover"
@@ -181,7 +204,10 @@ export default function Home() {
             Choose from economy to premium rides and get to your destination
             hassle-free.
           </p>
-          <button className="w-full md:w-auto rounded-2xl text-white bg-black py-4 px-8 text-lg font-semibold hover:bg-gray-800 transition-all duration-300">
+          <button
+            className="w-full md:w-auto rounded-2xl text-white bg-black py-4 px-8 text-lg font-semibold hover:bg-gray-800 transition-all duration-300"
+            onClick={() => router.push("/booking")}
+          >
             Explore Rides
           </button>
         </div>
@@ -193,17 +219,20 @@ export default function Home() {
             Your ride, your rules
           </h1>
           <p className="text-lg text-gray-700">
-            Whether commuting, traveling, or running errands, Uber gets you
+            Whether commuting, traveling, or running errands, we will gets you
             there effortlessly.
           </p>
-          <button className="w-full md:w-auto rounded-2xl text-white bg-black py-4 px-8 text-lg font-semibold hover:bg-gray-800 transition-all duration-300">
+          <button
+            className="w-full md:w-auto rounded-2xl text-white bg-black py-4 px-8 text-lg font-semibold hover:bg-gray-800 transition-all duration-300"
+            onClick={() => router.push("/booking")}
+          >
             Get Started
           </button>
         </div>
 
         <div className="relative w-full md:w-[900px] h-[500px] overflow-hidden rounded-xl shadow-2xl">
           <Image
-            src="/images/ride_sharing_scene.jpg"
+            src="/images/main_3.webp"
             alt="Ride Sharing Scene"
             layout="fill"
             objectFit="cover"
