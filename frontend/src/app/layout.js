@@ -23,9 +23,16 @@ const geistMono = Geist_Mono({
 export default function RootLayout({ children }) {
   const [mounted, setMounted] = useState(false);
   const pathname = usePathname();
-  const publicRoutes = ["/", "/login", "/signup"];
-  const adminRoutes = ["/admin"];
-  const driverRoutes = ["/driverdash"];
+  
+  // Define routes with better matching capabilities
+  const publicPaths = ["/", "/login", "/signup"];
+  const adminPaths = ["/admin"];
+  const driverPaths = ["/driverdash"];
+
+  // Function to check if the current path matches a protected category
+  const isPublicRoute = () => publicPaths.some(path => pathname === path);
+  const isAdminRoute = () => adminPaths.some(path => pathname.startsWith(path));
+  const isDriverRoute = () => driverPaths.some(path => pathname.startsWith(path));
 
   useEffect(() => {
     setMounted(true);
@@ -40,11 +47,11 @@ export default function RootLayout({ children }) {
           <UserProvider>
             <Navbar />
             <Toaster position="top-right" richColors />
-            {publicRoutes.includes(pathname) ? (
+            {isPublicRoute() ? (
               children
-            ) : adminRoutes.includes(pathname) ? (
+            ) : isAdminRoute() ? (
               <ProtectedRoutes roles={["admin"]}>{children}</ProtectedRoutes>
-            ) : driverRoutes.includes(pathname) ? (
+            ) : isDriverRoute() ? (
               <ProtectedRoutes roles={["driver"]}>{children}</ProtectedRoutes>
             ) : (
               <ProtectedRoutes roles={["user", "driver", "admin"]}>

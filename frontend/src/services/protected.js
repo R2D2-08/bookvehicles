@@ -22,6 +22,8 @@ const ProtectedRoutes = ({ children, roles = []}) => {
         if (!response.ok) {
           toast.error("Not authenticated");
           router.push("/login");
+          setLoading(false);
+          return;
         }
 
         const res = await response.json();
@@ -29,7 +31,11 @@ const ProtectedRoutes = ({ children, roles = []}) => {
           console.log(res.role);
           toast.error("Not Authorized"); 
           router.replace("/booking");
+          setLoading(false);
+          return;
         }
+        
+        // Only set authenticated if both checks pass
         setIsAuthenticated(true);
       } catch (error) {
         toast.error("Not authenticated");
@@ -40,7 +46,7 @@ const ProtectedRoutes = ({ children, roles = []}) => {
     };
 
     checkAuth();
-  }, [router]);
+  }, [router, roles]);
 
   if (loading) {
     return (
