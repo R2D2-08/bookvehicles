@@ -13,7 +13,7 @@ export default function ClientLayout({ children }) {
   const pathname = usePathname();
   
   // Define routes with better matching capabilities
-  const publicPaths = ["/", "/login", "/signup"];
+  const publicPaths = ["/", "/login", "/signup", "/signup/driver"];
   const adminPaths = ["/admin"];
   const driverPaths = ["/driverdash"];
 

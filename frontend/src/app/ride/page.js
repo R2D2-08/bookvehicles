@@ -4,6 +4,23 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import io from "socket.io-client";
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
+import { 
+  FaCar,
+  FaRoute,
+  FaMapMarker,
+  FaArrowUp,
+  FaShieldAlt,
+  FaPhone,
+  FaCommentDots,
+  FaExclamationTriangle,
+  FaStar,
+  FaUser,
+  FaMapMarkerAlt,
+  FaClock
+} from "react-icons/fa";
+import { GiSteeringWheel } from "react-icons/gi";
 
 export default function RidePage() {
   const router = useRouter();
@@ -81,6 +98,17 @@ export default function RidePage() {
 
   const journeyProgress = ((600 - journeyTimeLeft) / 600) * 100;
 
+  const rideDetails = {
+    pickup: "Current Location",
+    destination: "Destination Address",
+    driverName: "John Driver",
+    vehicle: "Ferrari R-800",
+    licenseNumber: "ABC-1234"
+    // Add other required properties
+  };
+
+  const position = [40.7128, -74.0060];
+
   const formatTime = (time) => {
     const minutes = Math.floor(time / 60);
     const seconds = time % 60;
@@ -93,39 +121,122 @@ export default function RidePage() {
   }
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-white text-gray-900 p-4">
-      <motion.div
-        className="bg-gray-100 p-6 rounded-lg shadow-lg max-w-md w-full text-center"
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.5 }}
-      >
-        <h1 className="text-2xl font-semibold mb-3">Enjoy Your Ride! 🚗</h1>
-        <p className="text-gray-600 mb-6">
-          Your driver is taking you to your destination
-        </p>
-
-        <div className="bg-white p-4 rounded-lg mb-6">
-          <p className="text-lg font-medium mb-2">Estimated Time Remaining</p>
-          <p className="text-3xl font-bold text-blue-600">
-            {formatTime(journeyTimeLeft)}
-          </p>
-        </div>
-
-        <div className="w-full h-4 bg-gray-200 rounded-full overflow-hidden mb-6">
-          <motion.div
-            className="h-full bg-blue-500 transition-all"
-            initial={{ width: "0%" }}
-            animate={{ width: `${journeyProgress}%` }}
-            transition={{ duration: 0.5 }}
+    <div className="flex h-screen bg-gray-50">
+      {/* Map Section (60% width) */}
+      <div className="w-full md:w-3/5 h-full">
+        <MapContainer
+          center={position}
+          zoom={13}
+          className="h-full w-full"
+        >
+          <TileLayer
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           />
-        </div>
+          <Marker position={position}>
+            <Popup>
+              Your Driver is Here
+            </Popup>
+          </Marker>
+        </MapContainer>
+      </div>
 
-        <p className="text-sm text-gray-500 mb-4">
-          Your driver will notify you when you arrive at your destination.
-          Payment will be processed automatically after your journey.
-        </p>
-      </motion.div>
+      {/* Ride Details Panel (40% width) */}
+      <div className="w-full md:w-2/5 h-full bg-white p-6 shadow-xl overflow-y-auto">
+        <motion.div
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          {/* Header */}
+          <div className="mb-8 text-center">
+            <h1 className="text-3xl font-bold text-gray-800 mb-2">
+              Active Ride
+            </h1>
+            <p className="text-gray-600">Tracking your journey in real-time</p>
+          </div>
+
+          {/* Driver Card */}
+          <div className="bg-gray-50 rounded-xl p-4 mb-6">
+            <div className="flex items-center gap-4">
+              <div className="bg-blue-100 p-3 rounded-lg">
+                <FaUser className="text-2xl text-blue-600" />
+              </div>
+              <div>
+                <h3 className="text-xl font-semibold">{rideDetails.driverName}</h3>
+                <p className="text-gray-600">Platinum-rated driver</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Route Details */}
+          <div className="space-y-6 mb-8">
+            <div className="bg-gray-50 rounded-xl p-4">
+              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                <FaMapMarkerAlt className="text-green-500" />
+                Route Details
+              </h3>
+              <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <span className="w-3 h-3 bg-green-500 rounded-full"></span>
+                  <p className="font-medium">{rideDetails.pickup}</p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="w-3 h-3 bg-red-500 rounded-full"></span>
+                  <p className="font-medium">{rideDetails.destination}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Vehicle Info */}
+            <div className="bg-gray-50 rounded-xl p-4">
+              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                <FaCar className="text-purple-500" />
+                Vehicle Information
+              </h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-gray-600">Model</p>
+                  <p className="font-medium">{rideDetails.vehicle}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">License</p>
+                  <p className="font-medium">{rideDetails.license}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Progress Section */}
+          <div className="bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl p-6">
+            <div className="text-center mb-4">
+              <FaClock className="text-3xl mb-2 mx-auto" />
+              <p className="text-sm">Estimated arrival in</p>
+              <h2 className="text-4xl font-bold my-2">{rideDetails.eta}</h2>
+              <p className="text-sm">{rideDetails.distance} remaining</p>
+            </div>
+            
+            <div className="w-full bg-white/20 rounded-full h-2 mb-2">
+              <motion.div
+                className="bg-white h-2 rounded-full"
+                initial={{ width: "0%" }}
+                animate={{ width: `${journeyProgress}%` }}
+                transition={{ duration: 1 }}
+              />
+            </div>
+            <div className="flex justify-between text-sm">
+              <span>{journeyProgress}% completed</span>
+              <span>{rideDetails.distance} to go</span>
+            </div>
+          </div>
+
+          {/* Safety Info */}
+          <div className="mt-6 text-center text-sm text-gray-600">
+            <p>24/7 Safety Monitoring Active</p>
+            <p>Emergency assistance available</p>
+          </div>
+        </motion.div>
+      </div>
     </div>
   );
 }

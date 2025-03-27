@@ -49,7 +49,7 @@ export default function Navbar() {
 
   return (
     <nav className="bg-black text-white px-6 py-4 z-10 flex items-center justify-between relative">
-      <div className="text-2xl font-bold">RideBook</div>
+      <div className="text-2xl font-bold">🥥 KeraGo</div>
 
       {/* Desktop Navigation */}
       <div className="hidden md:flex items-center space-x-6">

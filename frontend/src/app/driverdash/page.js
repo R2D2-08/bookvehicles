@@ -3,6 +3,8 @@ import io from "socket.io-client";
 import React, { useState, useEffect, useRef } from "react";
 import UserProfile from "../profile/page.js";
 import Image from "next/image";
+import { motion } from "framer-motion";
+import { FaCar, FaBell, FaFlagCheckered } from "react-icons/fa";
 import "leaflet/dist/leaflet.css";
 import {
   Car,
@@ -21,7 +23,6 @@ import {
   Mail,
   ClipboardList,
 } from "lucide-react";
-
 import dynamic from "next/dynamic";
 import "leaflet/dist/leaflet.css"; // Import Leaflet styles globally
 import { toast } from "sonner";
@@ -241,13 +242,24 @@ const DriverDashboard = () => {
       ]);
     };
 
+    const handleRideTaken = ({ requestId }) => {
+      console.log(`Ride taken for ${requestId}`);
+      const index = rideRequests.findIndex((r) => r.id === requestId);
+      if (index > -1) {
+        setRideRequests((prev) => [
+          ...prev.slice(0, index),
+          ...prev.slice(index + 1),
+        ]);
+      }
+    };
+
     socket.on("new_ride_request", handleNewRideRequest);
 
-    // Add handler for ride_taken event to remove requests taken by other drivers
-    socket.on("ride_taken", (requestId) => {
-      console.log(`Ride ${requestId} taken by another driver`);
-      setRideRequests((prev) => prev.filter((req) => req.id !== requestId));
-    });
+    // // Add handler for ride_taken event to remove requests taken by other drivers
+    // socket.on("ride_taken", (requestId) => {
+    //   console.log(`Ride ${requestId} taken by another driver`);
+    //   setRideRequests(prev => prev.filter(req => req.id !== requestId));
+    // });
 
     return () => {
       socket.off("new_ride_request", handleNewRideRequest);
@@ -506,13 +518,13 @@ const DriverDashboard = () => {
 
   const submitReview = async () => {
     if (!rideId || !revieweeId || rating === 0 || review.trim() === "") {
-      alert("Please provide a rating and review.");
+      toast.error("Please provide a rating and review.");
       return;
     }
 
     const reviewerId = localStorage.getItem("userId") || 2;
     if (!reviewerId) {
-      alert("User not logged in.");
+      toast.error("User not logged in.");
       return;
     }
 
@@ -533,14 +545,14 @@ const DriverDashboard = () => {
       });
 
       if (response.ok) {
-        alert("Review Submitted!");
+        toast.success("Review Submitted!");
       } else {
         const data = await response.json();
-        alert("Error: " + data.message);
+        toast.error("Error: " + data.message);
       }
     } catch (error) {
       console.error("Error submitting review:", error);
-      alert("Something went wrong.");
+      toast.error("Something went wrong.");
     }
     setShowReviewModal(false);
     setActiveRide(null);
@@ -812,9 +824,9 @@ const DriverDashboard = () => {
                     <p className="text-sm text-gray-700 italic">
                       ★★★★★ (4.9/5.0 Rating)
                       <br />
-                      &quot;Impeccably maintained with premium leather interior,
+                      "Impeccably maintained with premium leather interior,
                       dual-zone climate control, and advanced safety features.
-                      Experience luxury performance at its finest.&quot;
+                      Experience luxury performance at its finest."
                     </p>
                   </div>
                 </div>
@@ -914,125 +926,110 @@ const DriverDashboard = () => {
 
         {/* Ride in Progress */}
         {activeTab === "notifications" && activeRide && (
-          <div className="flex flex-col items-center mt-10 w-full">
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">
-              Active Ride
-            </h2>
+          <div className="w-full p-6">
+            <div className="max-w-7xl mx-auto">
+              <h2 className="text-3xl font-bold text-gray-800 mb-8 flex items-center gap-3">
+                <FaCar className="text-blue-500" />
+                Active Ride Dashboard
+              </h2>
 
-            <div className="flex justify-center items-start gap-6 w-3/4">
-              {/* Passenger Details Box */}
-              <div className="bg-white shadow-lg p-6 rounded-xl w-1/2 h-80 flex flex-col">
-                <h2 className="text-2xl font-bold text-gray-800 mb-6">
-                  Passenger Details
-                </h2>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div className="bg-white rounded-2xl shadow-xl p-8">
+                  <div className="flex items-center gap-4 mb-6">
+                    <div className="bg-blue-100 p-3 rounded-full">
+                      <UserCircle size={32} className="text-blue-600" />
+                    </div>
+                    <h3 className="text-2xl font-semibold text-gray-800">
+                      {activeRide.name}
+                    </h3>
+                  </div>
 
-                <div className="flex items-center gap-4 mb-6">
-                  <UserCircle size={40} className="text-blue-500" />
-                  <p className="text-xl font-semibold">{activeRide.name}</p>
+                  <div className="space-y-6">
+                    <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl">
+                      <div className="bg-green-100 p-3 rounded-full">
+                        <Phone size={24} className="text-green-600" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">Contact Number</p>
+                        <p className="font-medium">{activeRide.phone}</p>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl">
+                        <div className="bg-red-100 p-3 rounded-full">
+                          <MapPin size={24} className="text-red-600" />
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-500">
+                            Pickup Location
+                          </p>
+                          <p className="font-medium">{activeRide.pickup}</p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl">
+                        <div className="bg-purple-100 p-3 rounded-full">
+                          <MapPin size={24} className="text-purple-600" />
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-500">
+                            Drop-off Location
+                          </p>
+                          <p className="font-medium">{activeRide.dropoff}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex items-center gap-4 mb-6">
-                  <Phone size={30} className="text-green-500" />
-                  <p className="text-lg text-gray-700">{activeRide.phone}</p>
-                </div>
-                <div className="flex items-center gap-4 mb-6">
-                  <MapPin size={30} className="text-red-500" />
-                  <p className="text-lg text-gray-700">
-                    <strong>Pickup:</strong> {activeRide.pickup}
-                  </p>
-                </div>
-                <div className="flex items-center gap-4">
-                  <MapPin size={30} className="text-purple-500" />
-                  <p className="text-lg text-gray-700">
-                    <strong>Drop-off:</strong> {activeRide.dropoff}
-                  </p>
-                </div>
-              </div>
 
-              {/* Map Box */}
-              {isClient && !showReviewModal && (
-                <div className="bg-gray-200 shadow-lg rounded-xl w-1/2 h-80">
-                  <MapContainer
-                    center={[51.505, -0.09]}
-                    zoom={13}
-                    className="h-full w-full"
-                  >
-                    <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-                    <Marker position={[51.505, -0.09]}>
-                      <Popup>A simple popup</Popup>
-                    </Marker>
-                  </MapContainer>
-                </div>
-              )}
-            </div>
-            {/* Notify Passenger Button */}
-            <div className="mt-6 flex justify-center w-full">
-              <button
-                className="px-6 py-3 bg-black text-white font-bold rounded-xl hover:bg-gray-500 transition"
-                onClick={rideOngoing ? endJourney : notifyPassenger}
-              >
-                {rideOngoing ? "End Journey" : "Notify Passenger of Arrival"}
-              </button>
-            </div>
-
-            {/* Rating & Review Modal */}
-            {showReviewModal && (
-              <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-30 backdrop-blur-sm">
-                <div className="bg-white p-6 rounded-xl shadow-xl max-w-md w-full relative">
-                  {/* Close Button at Top Right */}
-                  <button
-                    className="absolute top-3 right-3 text-gray-600 hover:text-gray-800 text-2xl"
-                    onClick={() => setShowReviewModal(false)}
-                  >
-                    ✖
-                  </button>
-
-                  <h2 className="text-2xl font-bold mb-4 text-center text-gray-800">
-                    Rate the Passenger
-                  </h2>
-
-                  {/* Star Rating */}
-                  <div className="flex justify-center gap-2 mb-4">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <button
-                        key={star}
-                        className={`text-3xl transition ${
-                          rating >= star
-                            ? "text-yellow-500"
-                            : "text-gray-300 hover:text-yellow-400"
-                        }`}
-                        onClick={() => setRating(star)}
+                <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+                  <div className="h-full relative">
+                    {isClient && !showReviewModal && (
+                      <MapContainer
+                        center={[51.505, -0.09]}
+                        zoom={13}
+                        className="h-full w-full"
                       >
-                        ★
-                      </button>
-                    ))}
-                  </div>
-
-                  {/* Review Text Area */}
-                  <textarea
-                    className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-300 outline-none transition"
-                    placeholder="Write a review..."
-                    value={review}
-                    onChange={(e) => setReview(e.target.value)}
-                  ></textarea>
-
-                  {/* Buttons */}
-                  <div className="flex justify-end gap-4 mt-4">
-                    <button
-                      className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400"
-                      onClick={() => setShowReviewModal(false)}
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
-                      onClick={submitReview}
-                    >
-                      Submit
-                    </button>
+                        <TileLayer
+                          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                        />
+                        <Marker position={[51.505, -0.09]}>
+                          <Popup className="font-medium">
+                            <div className="flex items-center gap-2">
+                              <FaCar className="text-blue-500" />
+                              Current Vehicle Location
+                            </div>
+                          </Popup>
+                        </Marker>
+                      </MapContainer>
+                    )}
+                    <div className="absolute top-4 right-4 bg-white px-3 py-2 rounded-lg shadow-sm text-sm">
+                      🟢 Live Tracking Active
+                    </div>
                   </div>
                 </div>
               </div>
-            )}
+
+              <div className="mt-8 flex justify-center">
+                <button
+                  className="px-8 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white 
+                   rounded-xl font-semibold hover:shadow-lg transition-all"
+                  onClick={rideOngoing ? endJourney : notifyPassenger}
+                >
+                  {rideOngoing ? (
+                    <>
+                      <FaFlagCheckered className="inline mr-2" /> End Journey
+                    </>
+                  ) : (
+                    <>
+                      <FaBell className="inline mr-2" /> Notify Passenger
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </div>

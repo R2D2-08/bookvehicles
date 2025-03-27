@@ -18,6 +18,7 @@ const { doesNotMatch } = require("assert");
 const { authenticate, authorize } = require("../middleware/auth");
 const { decode } = require("punycode");
 const { where } = require("sequelize");
+const qs = require('qs')
 const uploadDir = path.join(__dirname, "../uploads");
 const pool = require("../db");
 
