@@ -229,11 +229,11 @@ const DriverDashboard = () => {
 
     socket.on("new_ride_request", handleNewRideRequest);
     
-    // Add handler for ride_taken event to remove requests taken by other drivers
-    socket.on("ride_taken", (requestId) => {
-      console.log(`Ride ${requestId} taken by another driver`);
-      setRideRequests(prev => prev.filter(req => req.id !== requestId));
-    });
+    // // Add handler for ride_taken event to remove requests taken by other drivers
+    // socket.on("ride_taken", (requestId) => {
+    //   console.log(`Ride ${requestId} taken by another driver`);
+    //   setRideRequests(prev => prev.filter(req => req.id !== requestId));
+    // });
 
     return () => {
       socket.off("new_ride_request", handleNewRideRequest);
