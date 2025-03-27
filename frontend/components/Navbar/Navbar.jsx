@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect, useState, useContext } from "react";
+import { useEffect, useState } from "react";
 import { Menu, X } from "lucide-react";
-import { UserContext } from "@/services/context";
+import { useAuth } from "@/services/context";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 const NavLink = ({ href, children }) => (
   <Link href={href} className="hover:text-gray-300">
@@ -22,8 +24,8 @@ const NavButton = ({ onClick, children }) => (
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
-  const { user_details, set_user } = useContext(UserContext);
-  const [user, setUser] = useState("");
+  const { user_details, isAuthenticated, logout } = useAuth();
+  const router = useRouter();
 
   const links = [
     { href: "/", label: "Ride" },
@@ -32,19 +34,18 @@ export default function Navbar() {
     { href: "/signup", label: "Sign up" },
   ];
 
-  const handleLogout = () => {
-    set_user(null);
-    localStorage.removeItem("user");
-    setUser("");
+  const authenticatedLinks = [
+    { href: "/booking", label: "Book a Ride" },
+    { href: "/profile", label: "Profile" },
+  ];
+
+  const handleLogout = async () => {
+    await logout();
   };
 
-  useEffect(() => {
-    const userName = localStorage.getItem("user");
-    console.log("Username: ", userName);
-    if (userName) {
-      setUser(userName);
-    }
-  });
+  const handleLogin = () => {
+    router.push("/login");
+  };
 
   return (
     <nav className="bg-black text-white px-6 py-4 z-10 flex items-center justify-between relative">
@@ -52,9 +53,14 @@ export default function Navbar() {
 
       {/* Desktop Navigation */}
       <div className="hidden md:flex items-center space-x-6">
-        {user.length > 0 ? (
+        {isAuthenticated ? (
           <>
-            <p>{user}</p>
+            {authenticatedLinks.map((link) => (
+              <NavLink key={link.label} href={link.href}>
+                {link.label}
+              </NavLink>
+            ))}
+            <p>{user_details?.name || "User"}</p>
             <NavButton onClick={handleLogout}>Log out</NavButton>
           </>
         ) : (
@@ -64,7 +70,7 @@ export default function Navbar() {
                 {link.label}
               </NavLink>
             ))}
-            <NavButton onClick={() => (window.location.href = "/login")}>
+            <NavButton onClick={handleLogin}>
               Log in
             </NavButton>
           </>
@@ -79,9 +85,14 @@ export default function Navbar() {
       {/* Mobile Dropdown Menu */}
       {isOpen && (
         <div className="absolute top-16 left-0 w-full bg-black text-white flex flex-col items-center space-y-4 py-6 md:hidden">
-          {user.length > 0 ? (
+          {isAuthenticated ? (
             <>
-              <p>{user}</p>
+              {authenticatedLinks.map((link) => (
+                <NavLink key={link.label} href={link.href}>
+                  {link.label}
+                </NavLink>
+              ))}
+              <p>{user_details?.name || "User"}</p>
               <NavButton onClick={handleLogout}>Log out</NavButton>
             </>
           ) : (
@@ -91,7 +102,7 @@ export default function Navbar() {
                   {link.label}
                 </NavLink>
               ))}
-              <NavButton onClick={() => (window.location.href = "/login")}>
+              <NavButton onClick={handleLogin}>
                 Log in
               </NavButton>
             </>
