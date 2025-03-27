@@ -58,81 +58,94 @@ const generateTokens = (user) => {
   return { accessToken, refreshToken };
 };
 
-router.post("/register", upload.single("profileImage"), async (req, res) => {
-  try {
-    const { name, email, password, phone_no, role, license_no, vehicle } =
-      req.body;
-    console.log(req.body, "checking out router.post(/register)");
+router.post(
+  "/register",
+  upload.fields([
+    {
+      name: "photo_url",
+      maxCount: 1,
+    },
+    {
+      name: "image_url",
+      maxCount: 1,
+    },
+  ]),
+  async (req, res) => {
+    try {
+      const { name, email, password, phone_no, role, license_no, vehicle_no, type, capacity, model } =
+        req.body;
+      console.log(req.body, "checking out router.post(/register)");
+      const existingUser = await User.findOne({ where: { email } });
+      if (existingUser)
+        return res.status(400).json({ error: "User already exists" });
 
-    const existingUser = await User.findOne({ where: { email } });
-    if (existingUser)
-      return res.status(400).json({ error: "User already exists" });
+      const hashedPassword = await bcrypt.hash(password, 10);
+      const photo_url = req.files["photo_url"] ? `/uploads/${req.files["photo_url"][0].filename}` : null;
+      const image_url = req.files["image_url"] ? `/uploads/${req.files["image_url"][0].filename}` : null;
+      console.log("Photo URL: " + photo_url);
+      console.log("Image URL: " + image_url);
+      const newUser = await User.create({
+        name,
+        email,
+        phone_no,
+        password: hashedPassword,
+        role: role || "user",
+        photo_url,
+      });
 
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const photo_url = req.file ? `/uploads/${req.file.filename}` : null;
+      if (role === "driver") {
+        if (!license_no || !vehicle_no) {
+          return res.status(400).json({
+            error: "Drivers must provide license number and vehicle details",
+          });
+        }
 
-    const newUser = await User.create({
-      name,
-      email,
-      phone_no,
-      password: hashedPassword,
-      role: role || "user",
-      photo_url,
-    });
+        const newVehicle = await Vehicle.create({
+          vehicle_no: vehicle_no,
+          type: type,
+          capacity: capacity,
+          model: model,
+          image_url
+        });
 
-    if (role === "driver") {
-      if (!license_no || !vehicle) {
-        return res.status(400).json({
-          error: "Drivers must provide license number and vehicle details",
+        await Driver.create({
+          user_id: newUser.id,
+          license_no,
+          vehicle_id: newVehicle.id,
+        });
+        await Passenger.create({
+          user_id: newUser.id,
+        });
+      } else {
+        await Passenger.create({
+          user_id: newUser.id,
         });
       }
 
-      const newVehicle = await Vehicle.create({
-        vehicle_no: vehicle.vehicle_no,
-        type: vehicle.type,
-        capacity: vehicle.capacity,
-        model: vehicle.model,
-        image_url: vehicle.image_url || null,
+      const { accessToken, refreshToken } = generateTokens(newUser);
+      res.cookie("refreshToken", refreshToken, {
+        ...cookieOptions,
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+      });
+      res.cookie("accessToken", accessToken, {
+        ...cookieOptions,
+        maxAge: 15 * 60 * 1000,
       });
 
-      await Driver.create({
-        user_id: newUser.id,
-        license_no,
-        vehicle_id: newVehicle.id,
+      res.status(201).json({
+        user: {
+          id: newUser.id,
+          name: newUser.name,
+          email: newUser.email,
+          role: newUser.role,
+        },
       });
-      await Passenger.create({
-        user_id: newUser.id,
-      });
-    } else {
-      await Passenger.create({
-        user_id: newUser.id,
-      });
+    } catch (err) {
+      console.error("Registration Error:", err);
+      res.status(400).json({ error: err.message });
     }
-
-    const { accessToken, refreshToken } = generateTokens(newUser);
-    res.cookie("refreshToken", refreshToken, {
-      ...cookieOptions,
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
-    res.cookie("accessToken", accessToken, {
-      ...cookieOptions,
-      maxAge: 15 * 60 * 1000,
-    });
-
-    res.status(201).json({
-      user: {
-        id: newUser.id,
-        name: newUser.name,
-        email: newUser.email,
-        role: newUser.role,
-      },
-    });
-  } catch (err) {
-    console.error("Registration Error:", err);
-    res.status(400).json({ error: err.message });
   }
-});
-
+);
 router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;

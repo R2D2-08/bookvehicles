@@ -57,7 +57,6 @@ function Login() {
       localStorage.setItem("user", data.name);
       localStorage.setItem("user_id", data.id);
       toast.success("Login Successful");
-
       router.push("/booking");
     } catch (error) {
       console.error("Login error:", error);
@@ -66,63 +65,95 @@ function Login() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100">
-      <div className="relative flex flex-col m-6 space-y-8 bg-white shadow-2xl rounded-2xl md:flex-row md:space-y-0">
-        <div className="flex flex-col justify-center p-8 md:p-14">
-          <h1 className="mb-3 text-4xl font-bold">Welcome back</h1>
-          <p className="font-light text-gray-400 mb-8">
-            Welcome back! Please enter your details
-          </p>
-          <form onSubmit={handleSubmit}>
-            <div className="py-4">
-              <label htmlFor="name" className="mb-2 text-md">
-                Email
-              </label>
-              <input
-                value={user.email}
-                onChange={handleChange}
-                type="email"
-                name="email"
-                id="email"
-                className="w-full p-2 border border-gray-300 rounded-md"
-                placeholder="Enter your name"
-              />
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center p-4">
+      <div className="w-full max-w-5xl bg-white rounded-xl shadow-lg overflow-hidden">
+        <div className="md:flex">
+          <div className="hidden md:block md:w-1/2 relative">
+            <Image
+              src="/images/hero_image.jpg"
+              alt="Login Illustration"
+              fill
+              className="object-cover"
+              priority
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex items-end p-8">
+              <div className="text-white">
+                <h2 className="text-3xl font-bold mb-2">Welcome Back</h2>
+                <p className="opacity-90">
+                  Your journey begins here. Sign in to continue your experience.
+                </p>
+              </div>
             </div>
-            <div className="py-4">
-              <label htmlFor="password" className="mb-2 text-md">
-                Password
-              </label>
-              <input
-                value={user.password}
-                onChange={handleChange}
-                type="password"
-                name="password"
-                id="password"
-                className="w-full p-2 border border-gray-300 rounded-md"
-                placeholder="Enter your password"
-              />
-            </div>
-            <button
-              type="submit"
-              className="w-full bg-black text-white p-2 rounded-lg mb-6 hover:bg-white hover:text-black border hover:border-gray-300 transition"
-            >
-              Log in
-            </button>
-          </form>
-          <div className="text-center text-gray-400">
-            Don&apos;t have an account?
-            <Link href="/signup">
-              <span className="font-bold text-black"> Sign up </span>
-            </Link>
           </div>
-        </div>
 
-        <div className="relative hidden md:block">
-          <img
-            src="/images/hero_image.jpg"
-            alt="Login Illustration"
-            className="w-[400px] h-full rounded-r-2xl object-cover"
-          />
+          {/* Right side - Form */}
+          <div className="w-full md:w-1/2 p-8 md:p-12">
+            <div className="text-center mb-8">
+              <h1 className="text-3xl font-bold text-gray-800 mb-2">Sign In</h1>
+              <p className="text-gray-600">
+                Welcome back! Please enter your details
+              </p>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div>
+                <label
+                  htmlFor="email"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  Email
+                </label>
+                <input
+                  value={user.email}
+                  onChange={handleChange}
+                  type="email"
+                  name="email"
+                  id="email"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                  placeholder="Enter your email"
+                  required
+                />
+              </div>
+
+              <div>
+                <div className="flex justify-between items-center mb-1">
+                  <label
+                    htmlFor="password"
+                    className="block text-sm font-medium text-gray-700"
+                  >
+                    Password
+                  </label>
+                </div>
+                <input
+                  value={user.password}
+                  onChange={handleChange}
+                  type="password"
+                  name="password"
+                  id="password"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                  placeholder="Enter your password"
+                  required
+                />
+              </div>
+
+              <button
+                type="submit"
+                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-4 rounded-lg hover:from-blue-700 hover:to-purple-700 transition shadow-md"
+              >
+                Sign In
+              </button>
+            </form>
+
+            <div className="mt-8 text-center text-sm text-gray-600">
+              Don't have an account?{" "}
+              <Link
+                href="/signup"
+                className="font-medium text-blue-600 hover:text-blue-800"
+              >
+                Sign up
+              </Link>
+            </div>
+          </div>
         </div>
       </div>
     </div>
