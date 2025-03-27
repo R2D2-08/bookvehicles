@@ -4,6 +4,7 @@ const { authenticate, authorize } = require("../middleware/auth");
 const Driver = require("../models/Drivers");
 const Vehicle = require("../models/Vehicles");
 const Passenger = require("../models/Passengers");
+const { User } = require("../models");
 const router = express.Router();
 router.post("/request", authenticate, async (req, res) => {
   try {
@@ -127,9 +128,15 @@ router.get("/details/passenger/:ride_id", authenticate, async (req, res) => {
   try {
     const { ride_id } = req.params;
     const ride = await Ride.findOne({ where: { ride_id } });
-    const driver = await Driver.findOne({ where: { user_id: ride.driver_id } });
+    const driver = await Driver.findOne({
+      where: { user_id: ride.driver_id },
+    });
+    const user = await User.findOne({
+      attributes: ["name", "phone_no", "email", "photo_url", "rating"],
+      where: { id: driver.user_id },
+    });
     const vehicle = await Vehicle.findOne({ where: { id: driver.vehicle_id } });
-    return res.status(200).json({ ride, driver, vehicle });
+    return res.status(200).json({ ride, driver, vehicle, user });
   } catch (error) {
     return res
       .status(500)
