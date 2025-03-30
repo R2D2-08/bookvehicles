@@ -330,10 +330,10 @@ const DriverDashboard = () => {
 
             // We'll still continue trying in the next interval
           },
-          {
-            enableHighAccuracy: true,
-            timeout: 10000, // Increased timeout (10s instead of 5s)
-            maximumAge: 30000, // Allow using a cached position up to 30 seconds old
+          { 
+            enableHighAccuracy: false, 
+            timeout: 600000,       // Increased timeout (10s instead of 5s)
+            maximumAge: 30000     // Allow using a cached position up to 30 seconds old
           }
         );
       }
