@@ -17,10 +17,10 @@ The **Vehicle Booking Service** is a **web-based application** that allows users
 |---------------|------------|
 | **Frontend** | Next.js (React.js) |
 | **Backend** | Node.js with Express.js |
-| **Database** | SQL (PostgreSQL/MySQL) |
-| **Deployment** | Vercel & Azure |
+| **Database** | MySQL |
+| **Deployment** | Vercel |
 | **Payment Integration** | Razorpay |
-| **Mapping API** | Google Maps API |
+| **Mapping API** | Open Street Map API |
 
 ## Installation & Setup
 ### Prerequisites
