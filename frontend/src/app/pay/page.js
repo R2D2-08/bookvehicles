@@ -14,6 +14,7 @@ import {
 } from "react-icons/fa";
 import { GiCheckMark } from "react-icons/gi";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 
 export default function PaymentPage() {
@@ -94,13 +95,13 @@ export default function PaymentPage() {
 
   const handleReviewSubmit = async () => {
     if (!rideId || !revieweeId || rating === 0 || review.trim() === "") {
-      alert("Please provide a rating and review.");
+      toast.error("Please provide a rating and review.");
       return;
     }
 
     const reviewerId = localStorage.getItem("userId") || 7;
     if (!reviewerId) {
-      alert("User not logged in.");
+      toast.error("User not logged in.");
       return;
     }
     const payload = {
@@ -121,14 +122,14 @@ export default function PaymentPage() {
       });
 
       if (response.ok) {
-        alert("Review Submitted!");
+        toast.success("Review Submitted!");
       } else {
         const data = await response.json();
-        alert("Error: " + data.message);
+        toast.error("Error: " + data.message);
       }
     } catch (error) {
       console.error("Error submitting review:", error);
-      alert("Something went wrong.");
+      toast.error("Something went wrong.");
     }
     router.push("/booking");
   };
