@@ -103,7 +103,6 @@ export default function PaymentPage() {
       alert("User not logged in.");
       return;
     }
-
     const payload = {
       ride_id: rideId,
       reviewer_id: reviewerId,

@@ -71,7 +71,7 @@ const Ride = sequelize.define(
       type: DataTypes.STRING,
       allowNull: true,
       references: {
-        model: "PaymentS",
+        model: "Payments",
         key: "transaction_id",
       },
     },
