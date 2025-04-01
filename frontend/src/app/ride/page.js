@@ -4,9 +4,9 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import io from "socket.io-client";
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
-import 'leaflet/dist/leaflet.css';
-import { 
+import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import "leaflet/dist/leaflet.css";
+import {
   FaCar,
   FaRoute,
   FaMapMarker,
@@ -18,19 +18,70 @@ import {
   FaStar,
   FaUser,
   FaMapMarkerAlt,
-  FaClock
+  FaClock,
 } from "react-icons/fa";
 import { GiSteeringWheel } from "react-icons/gi";
 
 export default function RidePage() {
   const router = useRouter();
   const socketRef = useRef(null);
+  const [customIcon, setCustomIcon] = useState(null);
   const [journeyStarted, setJourneyStarted] = useState(true);
   const [journeyTimeLeft, setJourneyTimeLeft] = useState(600); // 10 minutes by default
-
+  const [driverDetails, setDriverDetails] = useState(null);
+  const [driverLocation, setDriverLocation] = useState(() => {
+    const storedLocation = localStorage.getItem("driverLocation");
+    return storedLocation
+      ? JSON.parse(storedLocation)
+      : { lat: 40.7128, lng: -74.006 };
+  });
   // Set up socket connection
+
   useEffect(() => {
     // Set up socket connection
+    const fetchDriverDetails = async () => {
+      try {
+        const response = await fetch(
+          "http://localhost:5000/api/users/profile",
+          {
+            method: "GET",
+            credentials: "include",
+          }
+        );
+
+        if (!response.ok) {
+          toast.error("Failed to fetch driver details");
+        }
+
+        const res = await response.json();
+        console.log("Fetched Driver Details:", res);
+        console.log(res);
+
+        if (!res || !res.user) {
+          toast.error("Invalid driver data received");
+        }
+
+        setDriverDetails(res);
+      } catch (error) {
+        console.error("Error fetching driver details:", error);
+        toast.error("Internal Server Error");
+      }
+    };
+
+    fetchDriverDetails();
+
+    if (typeof window !== "undefined") {
+      import("leaflet").then((L) => {
+        setCustomIcon(
+          new L.Icon({
+            iconUrl: "https://cdn-icons-png.flaticon.com/512/684/684908.png",
+            iconSize: [32, 32],
+            iconAnchor: [16, 32],
+            popupAnchor: [0, -32],
+          })
+        );
+      });
+    }
     const socket = io("http://localhost:5000", {
       withCredentials: true,
       transports: ["polling", "websocket"],
@@ -75,6 +126,14 @@ export default function RidePage() {
       }
     });
 
+    socket.on("driver_location_update", (location) => {
+      console.log("Driver location update in ETA:", location);
+      if (location.lat && location.lng) {
+        setDriverLocation(location);
+        localStorage.setItem("driverLocation", JSON.stringify(location));
+      }
+    });
+
     // Cleanup on unmount
     return () => {
       socket.disconnect();
@@ -96,18 +155,18 @@ export default function RidePage() {
     return () => clearInterval(journeyInterval);
   }, []);
 
-  const journeyProgress = ((600 - journeyTimeLeft) / 600) * 100;
+  const journeyProgress = Math.floor(((600 - journeyTimeLeft) / 600) * 100);
 
   const rideDetails = {
-    pickup: "Current Location",
-    destination: "Destination Address",
-    driverName: "John Driver",
-    vehicle: "Ferrari R-800",
-    licenseNumber: "ABC-1234"
+    pickup: localStorage.getItem("pickLocation") || "Current Location",
+    destination: localStorage.getItem("dropLocation") || "Destination Address",
+    driverName: driverDetails?.user?.name || "Driver",
+    vehicle: driverDetails?.vehicle?.model || "Vehicle Model",
+    licenseNumber: driverDetails?.driver?.license_no || "License No.",
     // Add other required properties
   };
 
-  const position = [40.7128, -74.0060];
+  const position = [40.7128, -74.006];
 
   const formatTime = (time) => {
     const minutes = Math.floor(time / 60);
@@ -125,7 +184,7 @@ export default function RidePage() {
       {/* Map Section (60% width) */}
       <div className="w-full md:w-3/5 h-full">
         <MapContainer
-          center={position}
+          center={[driverLocation.lat, driverLocation.lng]}
           zoom={13}
           className="h-full w-full"
         >
@@ -133,11 +192,14 @@ export default function RidePage() {
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           />
-          <Marker position={position}>
-            <Popup>
-              Your Driver is Here
-            </Popup>
-          </Marker>
+          {customIcon && driverLocation && (
+            <Marker
+              position={[driverLocation.lat, driverLocation.lng]}
+              icon={customIcon}
+            >
+              <Popup>Current Location</Popup>
+            </Marker>
+          )}
         </MapContainer>
       </div>
 
@@ -163,7 +225,9 @@ export default function RidePage() {
                 <FaUser className="text-2xl text-blue-600" />
               </div>
               <div>
-                <h3 className="text-xl font-semibold">{rideDetails.driverName}</h3>
+                <h3 className="text-xl font-semibold">
+                  {rideDetails.driverName}
+                </h3>
                 <p className="text-gray-600">Platinum-rated driver</p>
               </div>
             </div>
@@ -201,7 +265,7 @@ export default function RidePage() {
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">License</p>
-                  <p className="font-medium">{rideDetails.license}</p>
+                  <p className="font-medium">{rideDetails.licenseNumber}</p>
                 </div>
               </div>
             </div>
@@ -215,7 +279,7 @@ export default function RidePage() {
               <h2 className="text-4xl font-bold my-2">{rideDetails.eta}</h2>
               <p className="text-sm">{rideDetails.distance} remaining</p>
             </div>
-            
+
             <div className="w-full bg-white/20 rounded-full h-2 mb-2">
               <motion.div
                 className="bg-white h-2 rounded-full"

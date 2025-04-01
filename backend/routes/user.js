@@ -180,7 +180,7 @@ router.post("/login", async (req, res) => {
 
     res
       .status(200)
-      .json({ message: "Login successful", email, name: user.name });
+      .json({ message: "Login successful", email, name: user.name, role: user.role });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -512,7 +512,7 @@ router.get("/profile", authenticate, async (req, res) => {
   try {
     console.log(req.user || req.cookies);
     const user = await User.findOne({ where: { id: req.user.id } });
-    if (req.role === "driver") {
+    if (req.user.role === "driver") {
       const driver = await Driver.findOne({ where: { user_id: req.user.id } });
       const vehicle = await Vehicle.findOne({
         where: { id: driver.vehicle_id },
