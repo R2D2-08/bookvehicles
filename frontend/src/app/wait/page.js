@@ -11,159 +11,177 @@ function WaitPage() {
   const socketRef = useRef(null);
   const [timeoutReached, setTimeoutReached] = useState(false);
 
+  // Socket.io connection and event handlers
   useEffect(() => {
-    // Set up socket connection for waiting for driver acceptance
     const socket = io("http://localhost:5000", {
       withCredentials: true,
-      transports: ["polling", "websocket"], // Start with polling, then upgrade to websocket
+      transports: ["polling", "websocket"],
       reconnection: true,
       reconnectionAttempts: 5,
       reconnectionDelay: 1000,
     });
     socketRef.current = socket;
 
-    // Debug connection
     socket.on("connect", () => {
-      console.log(
-        "Connected to socket server in wait page with ID:",
-        socket.id
-      );
-
-      // Re-register as a rider when connected
+      console.log("Connected to socket server with ID:", socket.id);
       if (localStorage.getItem("userId")) {
         socket.emit("register_rider", {
           userId: localStorage.getItem("userId"),
         });
-        socket.emit("reconnect_rider"); // Tell server we're waiting for a ride
+        socket.emit("reconnect_rider");
       }
     });
 
     socket.on("connect_error", (error) => {
-      console.error("Socket connection error in wait page:", error);
+      console.error("Connection error:", error);
       toast.error("Connection issue - retrying...");
     });
 
     socket.on("reconnect", (attemptNumber) => {
-      console.log(
-        `Reconnected to wait page server after ${attemptNumber} attempts`
-      );
-      // Re-register when reconnected
+      console.log(`Reconnected after ${attemptNumber} attempts`);
       if (localStorage.getItem("userId")) {
         socket.emit("register_rider", {
           userId: localStorage.getItem("userId"),
         });
-        socket.emit("reconnect_rider"); // Tell server we're waiting for a ride
+        socket.emit("reconnect_rider");
       }
     });
 
-    // Listen for ride acceptance
     socket.on("ride_accepted", (data) => {
-      console.log("Ride accepted in wait page:", data);
-
-      // Store driver information
+      console.log("Ride accepted:", data);
       if (data.driverId) {
         localStorage.setItem("driverId", data.driverId);
         localStorage.setItem("requestId", data.requestId);
         localStorage.setItem("rideId", data.rideId);
-
         setSearching(false);
-        toast.success("Driver found! Redirecting to tracking page...");
-
-        // Navigate to the ETA page with a slight delay for better UX
-        setTimeout(() => {
-          router.push("/eta");
-        }, 1500);
+        toast.success("Driver found! Redirecting...");
+        setTimeout(() => router.push("/eta"), 1500);
       }
     });
 
-    // Create progress bar animation
-    const duration = 180000; // 3 minutes timeout
-    const interval = 100; // Update every 100ms
+    // Progress bar setup
+    const duration = 180000;
+    const interval = 100;
     const step = (100 * interval) / duration;
-
     const progressInterval = setInterval(() => {
       setProgress((prev) => {
         if (prev + step >= 100) {
           clearInterval(progressInterval);
           setSearching(false);
           setTimeoutReached(true);
-          toast.error("No drivers available at the moment");
+          toast.error("No drivers available");
           return 100;
         }
         return prev + step;
       });
     }, interval);
 
-    // Clean up on component unmount
     return () => {
       clearInterval(progressInterval);
       socket.disconnect();
     };
   }, [router]);
 
-  // Handle timeout - allow user to retry or go back
-  const handleRetry = () => {
-    router.push("/select");
-  };
-
-  const handleBack = () => {
-    router.push("/booking");
-  };
+  const handleRetry = () => router.push("/select");
+  const handleBack = () => router.push("/booking");
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100">
-      <div className="flex flex-col items-center p-8 bg-white shadow-2xl rounded-2xl max-w-md w-full">
+      <div className="flex flex-col items-center p-8 bg-white backdrop-blur-lg shadow-xl rounded-3xl max-w-md w-full mx-4">
         {searching ? (
           <>
-            <h1 className="text-3xl font-bold mb-3">
-              Searching for a Driver...
+            <h1 className="text-2xl font-semibold text-black mb-4 text-center">
+              Matching You with the Perfect Driver
             </h1>
-            <p className="font-light text-gray-500 mb-6 text-center">
-              Hang tight! We&apos;re looking for available drivers near you.
+            <p className="text-slate-400 text-center mb-6 text-sm">
+              Scanning nearby drivers • {Math.round(progress)}% complete
             </p>
-            <div className="w-full h-3 bg-gray-300 rounded-full overflow-hidden mb-4">
+
+            <div className="w-full h-2.5 bg-slate-700 rounded-full mb-6 overflow-hidden">
               <div
-                className="h-full bg-blue-500 transition-all"
+                className="h-full bg-gradient-to-r from-green-400 to-green-500 transition-all duration-100 ease-out"
                 style={{ width: `${progress}%` }}
-              ></div>
+              >
+                <div className="w-full h-full animate-pulse bg-white/10"></div>
+              </div>
             </div>
-            <p className="text-sm text-gray-500 mt-2">
-              This may take a few minutes depending on driver availability.
+
+            <div className="flex space-x-2 justify-center mb-6">
+              {[...Array(3)].map((_, i) => (
+                <div
+                  key={i}
+                  className="h-2 w-2 bg-black rounded-full animate-pulse"
+                  style={{ animationDelay: `${i * 0.2}s` }}
+                />
+              ))}
+            </div>
+
+            <p className="text-xs text-slate-500 text-center">
+              Average wait time: 2-4 minutes
             </p>
           </>
         ) : timeoutReached ? (
           <div className="text-center">
-            <p className="text-xl font-bold text-red-500 mb-4">
+            <h2 className="text-xl font-semibold text-slate-100 mb-3">
               No Drivers Available
+            </h2>
+            <p className="text-slate-400 mb-6 text-sm">
+              We&apos;re expanding our driver network. Please try again shortly.
             </p>
-            <p className="text-gray-600 mb-6">
-              We couldn&apos;t find any drivers nearby. You can try again or
-              modify your request.
-            </p>
-            <div className="flex gap-4">
-              <button
-                onClick={handleBack}
-                className="px-4 py-2 border border-gray-400 rounded-md hover:bg-gray-100 transition"
-              >
-                Go Back
-              </button>
+
+            <div className="flex flex-col gap-3 w-full">
               <button
                 onClick={handleRetry}
-                className="px-4 py-2 bg-black text-white rounded-md hover:bg-gray-800 transition"
+                className="w-full py-3 px-6 bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/50 rounded-lg text-cyan-400 transition-all duration-200"
               >
-                Try Again
+                ↻ Retry Search
+              </button>
+              <button
+                onClick={handleBack}
+                className="w-full py-3 px-6 bg-slate-700/50 hover:bg-slate-700/70 border border-slate-600/50 rounded-lg text-slate-300 transition-all duration-200"
+              >
+                ← Adjust Request
               </button>
             </div>
           </div>
         ) : (
           <div className="text-center">
-            <p className="text-xl font-bold text-green-500 mb-2">
-              Driver Found!
+            <div className="mb-6 animate-scale-in">
+              <div className="relative w-16 h-16 mx-auto">
+                <div className="absolute inset-0 bg-cyan-500/20 rounded-full animate-ping"></div>
+                <div className="absolute inset-0 flex items-center justify-center bg-cyan-500 rounded-full">
+                  <svg
+                    className="w-8 h-8 text-white animate-check"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M5 13l4 4L19 7"
+                    />
+                  </svg>
+                </div>
+              </div>
+            </div>
+
+            <h2 className="text-xl font-semibold text-slate-100 mb-3">
+              Driver Matched!
+            </h2>
+            <p className="text-slate-400 text-sm mb-6">
+              Preparing your ride details...
             </p>
-            <p className="text-gray-600 mb-4">
-              Redirecting you to tracking page...
-            </p>
-            <div className="w-16 h-16 border-t-4 border-green-500 border-solid rounded-full animate-spin mx-auto"></div>
+
+            <div className="space-y-2">
+              <div className="h-1.5 w-full bg-slate-700 rounded-full overflow-hidden">
+                <div className="w-full h-full bg-cyan-500 animate-progress"></div>
+              </div>
+              <p className="text-xs text-slate-500">
+                Redirecting to tracking...
+              </p>
+            </div>
           </div>
         )}
       </div>

@@ -20,7 +20,7 @@ const Driver = require("./models/Drivers");
 const Vehicle = require("./models/Vehicles");
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 const io = new Server(server, {
-  cors: { origin: "http://localhost:3000", credentials: true },
+  cors: { origin: "https://bookvehicles.vercel.app", credentials: true },
 });
 
 app.use(
@@ -30,7 +30,7 @@ app.use(
 );
 
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
-app.use(cors({ origin: "http://localhost:3000", credentials: true }));
+app.use(cors({ origin: "https://bookvehicles.vercel.app", credentials: true }));
 app.use(morgan("dev"));
 app.use(cookieParser());
 app.use(express.json());

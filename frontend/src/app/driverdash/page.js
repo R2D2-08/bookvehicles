@@ -3,8 +3,6 @@ import io from "socket.io-client";
 import React, { useState, useEffect, useRef } from "react";
 import UserProfile from "../profile/page.js";
 import Image from "next/image";
-import { motion } from "framer-motion";
-import { FaCar, FaBell, FaFlagCheckered } from "react-icons/fa";
 import "leaflet/dist/leaflet.css";
 import {
   Car,
@@ -22,7 +20,9 @@ import {
   Star,
   Mail,
   ClipboardList,
+  StarIcon,
 } from "lucide-react";
+
 import dynamic from "next/dynamic";
 import "leaflet/dist/leaflet.css"; // Import Leaflet styles globally
 import { toast } from "sonner";
@@ -123,6 +123,7 @@ const DriverDashboard = () => {
   const [locationError, setLocationError] = useState(false);
   const [rideId, setRideId] = useState(null);
   const [revieweeId, setRevieweeId] = useState(null);
+  const [driverDetails, setDriverDetails] = useState(null);
 
   const socketRef = useRef(null);
   const locationIntervalRef = useRef(null);
@@ -158,6 +159,29 @@ const DriverDashboard = () => {
       }
     };
 
+    const fetchDriverDetails = async () => {
+      try {
+        const response = await fetch(
+          "http://localhost:5000/api/users/profile",
+          {
+            method: "GET",
+            credentials: "include",
+          }
+        );
+
+        const res = await response.json();
+
+        if (!response.ok) {
+          toast.error("Failed to fetch driver details");
+          return;
+        }
+        setDriverDetails(res);
+        console.log(res);
+      } catch (err) {
+        toast.error("Internal Server Error");
+      }
+    };
+    fetchDriverDetails();
     fetchRideDetails();
   }, []);
 
@@ -226,6 +250,10 @@ const DriverDashboard = () => {
 
     const handleNewRideRequest = ({ requestId, data }) => {
       console.log(`New ride request ${requestId}`);
+      const myDate = new Date(data.booking_date);
+      const result = myDate.getTime();
+      console.log(result);
+      console.log(Date.now());
       setRideRequests((prev) => [
         ...prev,
         {
@@ -235,31 +263,18 @@ const DriverDashboard = () => {
           pickup: data.pickLoc,
           dropoff: data.dropLoc,
           fare: data.price,
-          time: `${Math.floor(
-            (Date.now() - data.booking_date) / 60000
-          )} mins ago`,
+          time: `${Math.floor((Date.now() - result) / 60000)} mins ago`,
         },
       ]);
     };
 
-    const handleRideTaken = ({ requestId }) => {
-      console.log(`Ride taken for ${requestId}`);
-      const index = rideRequests.findIndex((r) => r.id === requestId);
-      if (index > -1) {
-        setRideRequests((prev) => [
-          ...prev.slice(0, index),
-          ...prev.slice(index + 1),
-        ]);
-      }
-    };
-
     socket.on("new_ride_request", handleNewRideRequest);
 
-    // // Add handler for ride_taken event to remove requests taken by other drivers
-    // socket.on("ride_taken", (requestId) => {
-    //   console.log(`Ride ${requestId} taken by another driver`);
-    //   setRideRequests(prev => prev.filter(req => req.id !== requestId));
-    // });
+    // Add handler for ride_taken event to remove requests taken by other drivers
+    socket.on("ride_taken", (requestId) => {
+      console.log(`Ride ${requestId} taken by another driver`);
+      setRideRequests((prev) => prev.filter((req) => req.id !== requestId));
+    });
 
     return () => {
       socket.off("new_ride_request", handleNewRideRequest);
@@ -331,8 +346,8 @@ const DriverDashboard = () => {
             // We'll still continue trying in the next interval
           },
           {
-            enableHighAccuracy: true,
-            timeout: 10000, // Increased timeout (10s instead of 5s)
+            enableHighAccuracy: false,
+            timeout: 600000, // Increased timeout (10s instead of 5s)
             maximumAge: 30000, // Allow using a cached position up to 30 seconds old
           }
         );
@@ -518,7 +533,7 @@ const DriverDashboard = () => {
 
   const submitReview = async () => {
     if (!rideId || !revieweeId || rating === 0 || review.trim() === "") {
-      toast.error("Please provide a rating and review.");
+      toast.info("Please provide a rating and review.");
       return;
     }
 
@@ -646,7 +661,11 @@ const DriverDashboard = () => {
                   <div className="relative group">
                     <div className="w-32 h-32 rounded-full border-4 border-white shadow-lg overflow-hidden">
                       <Image
-                        src="/images/avatar-placeholder.jpg"
+                        src={
+                          driverDetails?.user?.photo_url
+                            ? `http://localhost:5000${driverDetails.user.photo_url}`
+                            : "/images/avatar-placeholder.jpg"
+                        }
                         alt="Profile"
                         width={128}
                         height={128}
@@ -662,7 +681,7 @@ const DriverDashboard = () => {
                   {/* Basic Info */}
                   <div className="space-y-2">
                     <h3 className="text-2xl font-bold text-gray-900">
-                      John Driver
+                      {driverDetails?.user?.name || "Driver"}
                     </h3>
                     <div className="flex items-center gap-2 text-gray-600">
                       <BadgeCheck className="w-5 h-5 text-green-500" />
@@ -687,16 +706,18 @@ const DriverDashboard = () => {
                       <div className="flex items-center gap-3">
                         <Mail className="w-5 h-5 text-gray-500" />
                         <span className="text-gray-700">
-                          john.driver@example.com
+                          {driverDetails?.user?.email || "driver@gmail.com"}
                         </span>
                       </div>
                       <div className="flex items-center gap-3">
                         <Phone className="w-5 h-5 text-gray-500" />
-                        <span className="text-gray-700">+1 (555) 123-4567</span>
+                        <span className="text-gray-700">
+                          {driverDetails?.user?.phone_no || "7909234578"}
+                        </span>
                       </div>
                       <div className="flex items-center gap-3">
                         <MapPin className="w-5 h-5 text-gray-500" />
-                        <span className="text-gray-700">New York, USA</span>
+                        <span className="text-gray-700">Kozhikode, Kerala</span>
                       </div>
                     </div>
                   </div>
@@ -710,7 +731,9 @@ const DriverDashboard = () => {
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <p className="text-sm text-gray-500">License Number</p>
-                        <p className="font-medium">D123-4567-890</p>
+                        <p className="font-medium">
+                          {driverDetails?.driver?.license_no || "D123-4567-890"}
+                        </p>
                       </div>
                       <div>
                         <p className="text-sm text-gray-500">Expiry Date</p>
@@ -736,11 +759,17 @@ const DriverDashboard = () => {
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                       <div>
                         <p className="text-sm text-gray-500">Make & Model</p>
-                        <p className="font-medium">Ferrari R-800</p>
+                        <p className="font-medium">
+                          {driverDetails?.vehicle?.model
+                            ? driverDetails?.vehicle?.model.split(" ")[0]
+                            : "Ferrari R-800"}
+                        </p>
                       </div>
                       <div>
                         <p className="text-sm text-gray-500">License Plate</p>
-                        <p className="font-medium">ABC-1234</p>
+                        <p className="font-medium">
+                          {driverDetails?.driver?.license_no || "ABC-1234"}
+                        </p>
                       </div>
                       <div>
                         <p className="text-sm text-gray-500">Color</p>
@@ -748,7 +777,11 @@ const DriverDashboard = () => {
                       </div>
                       <div>
                         <p className="text-sm text-gray-500">Year</p>
-                        <p className="font-medium">2023</p>
+                        <p className="font-medium">
+                          {driverDetails?.vehicle?.model
+                            ? driverDetails?.vehicle?.model.split(" ")[1]
+                            : "2009"}
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -764,7 +797,11 @@ const DriverDashboard = () => {
             <div className="flex-1 flex justify-center max-w-2xl transform transition-transform duration-500 hover:scale-105">
               <div className="relative rounded-2xl overflow-hidden shadow-2xl border-8 border-white">
                 <Image
-                  src="/images/car.webp"
+                  src={
+                    driverDetails?.vehicle?.image_url
+                      ? `http://localhost:5000${driverDetails.vehicle.image_url}`
+                      : "/images/car.webp"
+                  }
                   alt="Driver's Car"
                   width={800}
                   height={500}
@@ -772,63 +809,118 @@ const DriverDashboard = () => {
                   priority
                 />
                 <div className="absolute bottom-4 left-4 bg-red-600 text-white px-4 py-2 rounded-full text-sm font-bold">
-                  PREMIUM CLASS
+                  {driverDetails?.vehicle?.type || "PREMIUM"}
                 </div>
               </div>
             </div>
 
             {/* Details Section */}
-            <div className="flex-1 max-w-xl bg-gradient-to-br from-white to-gray-50 p-8 rounded-2xl shadow-2xl border border-gray-100">
-              <div className="space-y-6">
-                <h2 className="text-3xl font-extrabold text-gray-900 border-l-4 border-red-600 pl-4">
-                  Vehicle Details
-                </h2>
+            <div className="flex-1 max-w-xl bg-gradient-to-br from-white to-gray-50 p-8 rounded-2xl shadow-xl border border-gray-200/80 hover:shadow-lg transition-shadow duration-300">
+              <div className="space-y-8">
+                {/* Header Section */}
+                <div className="flex items-start justify-between">
+                  <div>
+                    <h2 className="text-3xl font-bold text-gray-900 relative pl-5">
+                      <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-10 bg-gradient-to-b from-red-600 to-red-400 rounded-full"></span>
+                      Vehicle Specifications
+                    </h2>
+                  </div>
+                </div>
 
-                <div className="space-y-4">
-                  <h3 className="text-2xl font-bold bg-gradient-to-r from-red-600 to-orange-500 bg-clip-text text-transparent">
-                    Ferrari R-800
+                {/* Vehicle Model */}
+                <div className="relative group">
+                  <h3 className="text-4xl font-extrabold tracking-tight text-gray-900">
+                    {driverDetails?.vehicle?.model
+                      ? driverDetails.vehicle.model.split(" ")[0]
+                      : "Ferrari"}{" "}
+                    <span className="text-red-600">
+                      {driverDetails?.vehicle?.model
+                        ? driverDetails.vehicle.model.split(" ")[1]
+                        : "R-800"}
+                    </span>
                   </h3>
+                  <div className="absolute -bottom-1 left-0 h-1 w-24 bg-gradient-to-r from-red-600 to-orange-500 rounded-full opacity-80 group-hover:w-32 transition-all duration-300"></div>
+                </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="flex items-center space-x-2">
-                      <CarIcon className="w-5 h-5 text-red-600" />
-                      <div>
-                        <p className="text-sm text-gray-500">Type</p>
-                        <p className="font-medium text-gray-800">Sedan</p>
+                {/* Specifications Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  {[
+                    {
+                      icon: <CarIcon className="w-6 h-6 text-red-600" />,
+                      label: "Vehicle Type",
+                      value: driverDetails?.vehicle?.type || "Luxury Sedan",
+                      badge: "Executive",
+                    },
+                    {
+                      icon: (
+                        <LicensePlateIcon className="w-6 h-6 text-red-600" />
+                      ),
+                      label: "License Plate",
+                      value: driverDetails?.driver?.license_no || "ABC-1234",
+                      badge: "Valid",
+                    },
+                    {
+                      icon: (
+                        <PaintBucketIcon className="w-6 h-6 text-red-600" />
+                      ),
+                      label: "Exterior Color",
+                      value: "Rosso Corsa",
+                      badge: "Premium",
+                    },
+                    {
+                      icon: <UserGroupIcon className="w-6 h-6 text-red-600" />,
+                      label: "Seating Capacity",
+                      value: "4 Passengers",
+                      badge: "Comfort",
+                    },
+                  ].map((item, index) => (
+                    <div
+                      key={index}
+                      className="flex items-start space-x-4 p-3 hover:bg-gray-50/50 rounded-lg transition-colors"
+                    >
+                      <div className="p-2 bg-red-50 rounded-lg">
+                        {item.icon}
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          {item.label}
+                        </p>
+                        <div className="flex items-center gap-2">
+                          <p className="font-semibold text-gray-800">
+                            {item.value}
+                          </p>
+                          <span className="text-xs px-2 py-0.5 bg-gray-100 text-gray-600 rounded-full border border-gray-200">
+                            {item.badge}
+                          </span>
+                        </div>
                       </div>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <LicensePlateIcon className="w-5 h-5 text-red-600" />
-                      <div>
-                        <p className="text-sm text-gray-500">License Plate</p>
-                        <p className="font-medium text-gray-800">ABC-1234</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <PaintBucketIcon className="w-5 h-5 text-red-600" />
-                      <div>
-                        <p className="text-sm text-gray-500">Color</p>
-                        <p className="font-medium text-gray-800">Rosso Corsa</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <UserGroupIcon className="w-5 h-5 text-red-600" />
-                      <div>
-                        <p className="text-sm text-gray-500">Seats</p>
-                        <p className="font-medium text-gray-800">4 Available</p>
-                      </div>
-                    </div>
-                  </div>
+                  ))}
+                </div>
 
-                  <div className="mt-6 p-4 bg-red-50 rounded-lg border border-red-100">
-                    <p className="text-sm text-gray-700 italic">
-                      ★★★★★ (4.9/5.0 Rating)
-                      <br />
-                      &quot;Impeccably maintained with premium leather interior,
-                      dual-zone climate control, and advanced safety features.
-                      Experience luxury performance at its finest.&quot;
-                    </p>
+                {/* Rating & Description */}
+                <div className="mt-6 p-5 bg-gradient-to-r from-red-50 to-orange-50 rounded-xl border border-red-100/50">
+                  <div className="flex items-center mb-3">
+                    <div className="flex">
+                      {[...Array(5)].map((_, i) => (
+                        <StarIcon
+                          key={i}
+                          className={`w-5 h-5 ${
+                            i < 4 ? "text-amber-400" : "text-gray-300"
+                          }`}
+                        />
+                      ))}
+                    </div>
+                    <span className="ml-2 text-sm font-medium text-gray-700">
+                      4.9/5.0 (128 reviews)
+                    </span>
                   </div>
+                  <p className="text-gray-700 italic leading-relaxed">
+                    &quot;Impeccably maintained with premium Nappa leather
+                    interior, carbon fiber accents, dual-zone climate control,
+                    and advanced driver assistance systems. Experience the
+                    pinnacle of Italian automotive craftsmanship.&quot;
+                  </p>
                 </div>
               </div>
             </div>
@@ -926,110 +1018,172 @@ const DriverDashboard = () => {
 
         {/* Ride in Progress */}
         {activeTab === "notifications" && activeRide && (
-          <div className="w-full p-6">
-            <div className="max-w-7xl mx-auto">
-              <h2 className="text-3xl font-bold text-gray-800 mb-8 flex items-center gap-3">
-                <FaCar className="text-blue-500" />
-                Active Ride Dashboard
-              </h2>
+          <div className="flex flex-col items-center mt-10 w-full">
+            <h2 className="text-2xl font-bold text-gray-800 mb-4">
+              Active Ride
+            </h2>
 
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <div className="bg-white rounded-2xl shadow-xl p-8">
-                  <div className="flex items-center gap-4 mb-6">
-                    <div className="bg-blue-100 p-3 rounded-full">
-                      <UserCircle size={32} className="text-blue-600" />
-                    </div>
-                    <h3 className="text-2xl font-semibold text-gray-800">
-                      {activeRide.name}
-                    </h3>
-                  </div>
+            <div className="flex justify-center items-start gap-6 w-3/4">
+              {/* Passenger Details Box */}
+              <div className="bg-white shadow-lg p-6 rounded-xl w-1/2 h-80 flex flex-col">
+                <h2 className="text-2xl font-bold text-gray-800 mb-6">
+                  Passenger Details
+                </h2>
 
-                  <div className="space-y-6">
-                    <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl">
-                      <div className="bg-green-100 p-3 rounded-full">
-                        <Phone size={24} className="text-green-600" />
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-500">Contact Number</p>
-                        <p className="font-medium">{activeRide.phone}</p>
-                      </div>
-                    </div>
-
-                    <div className="space-y-4">
-                      <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl">
-                        <div className="bg-red-100 p-3 rounded-full">
-                          <MapPin size={24} className="text-red-600" />
-                        </div>
-                        <div>
-                          <p className="text-sm text-gray-500">
-                            Pickup Location
-                          </p>
-                          <p className="font-medium">{activeRide.pickup}</p>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl">
-                        <div className="bg-purple-100 p-3 rounded-full">
-                          <MapPin size={24} className="text-purple-600" />
-                        </div>
-                        <div>
-                          <p className="text-sm text-gray-500">
-                            Drop-off Location
-                          </p>
-                          <p className="font-medium">{activeRide.dropoff}</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                <div className="flex items-center gap-4 mb-6">
+                  <UserCircle size={40} className="text-blue-500" />
+                  <p className="text-xl font-semibold">{activeRide.name}</p>
                 </div>
-
-                <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
-                  <div className="h-full relative">
-                    {isClient && !showReviewModal && (
-                      <MapContainer
-                        center={[51.505, -0.09]}
-                        zoom={13}
-                        className="h-full w-full"
-                      >
-                        <TileLayer
-                          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                        />
-                        <Marker position={[51.505, -0.09]}>
-                          <Popup className="font-medium">
-                            <div className="flex items-center gap-2">
-                              <FaCar className="text-blue-500" />
-                              Current Vehicle Location
-                            </div>
-                          </Popup>
-                        </Marker>
-                      </MapContainer>
-                    )}
-                    <div className="absolute top-4 right-4 bg-white px-3 py-2 rounded-lg shadow-sm text-sm">
-                      🟢 Live Tracking Active
-                    </div>
-                  </div>
+                <div className="flex items-center gap-4 mb-6">
+                  <Phone size={30} className="text-green-500" />
+                  <p className="text-lg text-gray-700">{activeRide.phone}</p>
+                </div>
+                <div className="flex items-center gap-4 mb-6">
+                  <MapPin size={30} className="text-red-500" />
+                  <p className="text-lg text-gray-700">
+                    <strong>Pickup:</strong> {activeRide.pickup}
+                  </p>
+                </div>
+                <div className="flex items-center gap-4">
+                  <MapPin size={30} className="text-purple-500" />
+                  <p className="text-lg text-gray-700">
+                    <strong>Drop-off:</strong> {activeRide.dropoff}
+                  </p>
                 </div>
               </div>
 
-              <div className="mt-8 flex justify-center">
-                <button
-                  className="px-8 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white 
-                   rounded-xl font-semibold hover:shadow-lg transition-all"
-                  onClick={rideOngoing ? endJourney : notifyPassenger}
-                >
-                  {rideOngoing ? (
-                    <>
-                      <FaFlagCheckered className="inline mr-2" /> End Journey
-                    </>
-                  ) : (
-                    <>
-                      <FaBell className="inline mr-2" /> Notify Passenger
-                    </>
-                  )}
-                </button>
-              </div>
+              {/* Map Box */}
+              {isClient && !showReviewModal && (
+                <div className="bg-gray-200 shadow-lg rounded-xl w-1/2 h-80">
+                  <MapContainer
+                    center={[51.505, -0.09]}
+                    zoom={13}
+                    className="h-full w-full"
+                  >
+                    <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                    <Marker position={[51.505, -0.09]}>
+                      <Popup>A simple popup</Popup>
+                    </Marker>
+                  </MapContainer>
+                </div>
+              )}
             </div>
+            {/* Notify Passenger Button */}
+            <div className="mt-6 flex justify-center w-full">
+              <button
+                className="px-6 py-3 bg-black text-white font-bold rounded-xl hover:bg-gray-500 transition"
+                onClick={rideOngoing ? endJourney : notifyPassenger}
+              >
+                {rideOngoing ? "End Journey" : "Notify Passenger of Arrival"}
+              </button>
+            </div>
+
+            {/* Rating & Review Modal */}
+            {showReviewModal && (
+              <div className="fixed inset-0 flex items-center justify-center bg-gray-900/30 backdrop-blur-sm z-50">
+                <div className="bg-white p-8 rounded-2xl shadow-lg max-w-md w-full mx-4 relative border border-gray-100 animate-pop-in">
+                  {/* Close Button */}
+                  <button
+                    className="absolute top-5 right-5 text-gray-400 hover:text-gray-600 transition-colors duration-150"
+                    onClick={() => setShowReviewModal(false)}
+                    aria-label="Close modal"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-6 w-6"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M6 18L18 6M6 6l12 12"
+                      />
+                    </svg>
+                  </button>
+
+                  {/* Header */}
+                  <div className="text-center mb-6">
+                    <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-8 w-8 text-blue-400"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
+                        />
+                      </svg>
+                    </div>
+                    <h2 className="text-2xl font-bold text-gray-800 mb-1">
+                      Rate Your Passenger
+                    </h2>
+                    <p className="text-gray-500">
+                      Your feedback helps improve the community
+                    </p>
+                  </div>
+
+                  {/* Star Rating */}
+                  <div className="flex justify-center gap-2 mb-4">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <button
+                        key={star}
+                        className={`text-4xl transition-all duration-150 ${
+                          rating >= star
+                            ? "text-yellow-400"
+                            : "text-gray-300 hover:text-yellow-300"
+                        }`}
+                        onClick={() => setRating(star)}
+                      >
+                        {rating >= star ? "★" : "☆"}
+                      </button>
+                    ))}
+                  </div>
+                  <p className="text-center text-sm text-gray-500 mb-6">
+                    {rating
+                      ? ["Poor", "Fair", "Good", "Very Good", "Excellent"][
+                          rating - 1
+                        ]
+                      : "Tap to rate"}
+                  </p>
+
+                  {/* Review Text Area */}
+                  <div className="mb-6">
+                    <textarea
+                      className="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-200 focus:border-blue-300 outline-none transition-all duration-200 resize-none"
+                      placeholder="Tell us about your experience (optional)..."
+                      rows={4}
+                      value={review}
+                      onChange={(e) => setReview(e.target.value)}
+                    />
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex gap-4">
+                    <button
+                      className="flex-1 py-3 px-6 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-colors duration-200 font-medium"
+                      onClick={() => setShowReviewModal(false)}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      className="flex-1 py-3 px-6 bg-blue-500 text-white rounded-xl hover:bg-blue-600 transition-colors duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                      onClick={submitReview}
+                      disabled={!rating}
+                    >
+                      Submit
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
