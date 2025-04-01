@@ -41,7 +41,7 @@ function Signup() {
         formData.append("photo_url", user.photo_url);
       }
 
-      const response = await fetch("http://localhost:5000/api/users/register", {
+      const response = await fetch("http://74.224.102.82/api/users/register/", {
         method: "POST",
         body: formData,
         credentials: "include",
@@ -67,7 +67,9 @@ function Signup() {
           {/* Left side - Form */}
           <div className="w-full md:w-1/2 p-8 md:p-10">
             <div className="text-center md:text-left">
-              <h1 className="text-3xl font-bold text-gray-800 mb-2">Create your account</h1>
+              <h1 className="text-3xl font-bold text-gray-800 mb-2">
+                Create your account
+              </h1>
               <p className="text-gray-600 mb-8">Join our community today</p>
             </div>
 

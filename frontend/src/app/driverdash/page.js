@@ -161,14 +161,17 @@ const DriverDashboard = () => {
 
     const fetchDriverDetails = async () => {
       try {
-        const response = await fetch("http://localhost:5000/api/users/profile", {
-          method: "GET",
-          credentials: "include",
-        });
+        const response = await fetch(
+          "http://localhost:5000/api/users/profile",
+          {
+            method: "GET",
+            credentials: "include",
+          }
+        );
 
         const res = await response.json();
 
-        if(!response.ok) {
+        if (!response.ok) {
           toast.error("Failed to fetch driver details");
           return;
         }
@@ -177,7 +180,7 @@ const DriverDashboard = () => {
       } catch (err) {
         toast.error("Internal Server Error");
       }
-    }
+    };
     fetchDriverDetails();
     fetchRideDetails();
   }, []);
@@ -658,8 +661,10 @@ const DriverDashboard = () => {
                   <div className="relative group">
                     <div className="w-32 h-32 rounded-full border-4 border-white shadow-lg overflow-hidden">
                       <Image
-                        src={driverDetails?.user?.photo_url ?
-                          `http://localhost:5000${driverDetails.user.photo_url}` : "/images/avatar-placeholder.jpg"
+                        src={
+                          driverDetails?.user?.photo_url
+                            ? `http://localhost:5000${driverDetails.user.photo_url}`
+                            : "/images/avatar-placeholder.jpg"
                         }
                         alt="Profile"
                         width={128}
@@ -706,7 +711,9 @@ const DriverDashboard = () => {
                       </div>
                       <div className="flex items-center gap-3">
                         <Phone className="w-5 h-5 text-gray-500" />
-                        <span className="text-gray-700">{driverDetails?.user?.phone_no || "7909234578"}</span>
+                        <span className="text-gray-700">
+                          {driverDetails?.user?.phone_no || "7909234578"}
+                        </span>
                       </div>
                       <div className="flex items-center gap-3">
                         <MapPin className="w-5 h-5 text-gray-500" />
@@ -724,7 +731,9 @@ const DriverDashboard = () => {
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <p className="text-sm text-gray-500">License Number</p>
-                        <p className="font-medium">{driverDetails?.driver?.license_no || "D123-4567-890"}</p>
+                        <p className="font-medium">
+                          {driverDetails?.driver?.license_no || "D123-4567-890"}
+                        </p>
                       </div>
                       <div>
                         <p className="text-sm text-gray-500">Expiry Date</p>
@@ -750,11 +759,17 @@ const DriverDashboard = () => {
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                       <div>
                         <p className="text-sm text-gray-500">Make & Model</p>
-                        <p className="font-medium">{driverDetails?.vehicle?.model ? driverDetails?.vehicle?.model.split(" ")[0] : "Ferrari R-800"}</p>
+                        <p className="font-medium">
+                          {driverDetails?.vehicle?.model
+                            ? driverDetails?.vehicle?.model.split(" ")[0]
+                            : "Ferrari R-800"}
+                        </p>
                       </div>
                       <div>
                         <p className="text-sm text-gray-500">License Plate</p>
-                        <p className="font-medium">{driverDetails?.driver?.license_no || "ABC-1234"}</p>
+                        <p className="font-medium">
+                          {driverDetails?.driver?.license_no || "ABC-1234"}
+                        </p>
                       </div>
                       <div>
                         <p className="text-sm text-gray-500">Color</p>
@@ -762,7 +777,11 @@ const DriverDashboard = () => {
                       </div>
                       <div>
                         <p className="text-sm text-gray-500">Year</p>
-                        <p className="font-medium">{driverDetails?.vehicle?.model ? driverDetails?.vehicle?.model.split(" ")[1] : "2009"}</p>
+                        <p className="font-medium">
+                          {driverDetails?.vehicle?.model
+                            ? driverDetails?.vehicle?.model.split(" ")[1]
+                            : "2009"}
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -778,7 +797,11 @@ const DriverDashboard = () => {
             <div className="flex-1 flex justify-center max-w-2xl transform transition-transform duration-500 hover:scale-105">
               <div className="relative rounded-2xl overflow-hidden shadow-2xl border-8 border-white">
                 <Image
-                  src={driverDetails?.vehicle?.image_url ? `http://localhost:5000${driverDetails.vehicle.image_url}` : "/images/car.webp"}
+                  src={
+                    driverDetails?.vehicle?.image_url
+                      ? `http://localhost:5000${driverDetails.vehicle.image_url}`
+                      : "/images/car.webp"
+                  }
                   alt="Driver's Car"
                   width={800}
                   height={500}
@@ -807,7 +830,14 @@ const DriverDashboard = () => {
                 {/* Vehicle Model */}
                 <div className="relative group">
                   <h3 className="text-4xl font-extrabold tracking-tight text-gray-900">
-                    {driverDetails?.vehicle?.model ? driverDetails.vehicle.model.split(" ")[0] : "Ferrari"} <span className="text-red-600">{driverDetails?.vehicle?.model ? driverDetails.vehicle.model.split(" ")[1] : "R-800"}</span>
+                    {driverDetails?.vehicle?.model
+                      ? driverDetails.vehicle.model.split(" ")[0]
+                      : "Ferrari"}{" "}
+                    <span className="text-red-600">
+                      {driverDetails?.vehicle?.model
+                        ? driverDetails.vehicle.model.split(" ")[1]
+                        : "R-800"}
+                    </span>
                   </h3>
                   <div className="absolute -bottom-1 left-0 h-1 w-24 bg-gradient-to-r from-red-600 to-orange-500 rounded-full opacity-80 group-hover:w-32 transition-all duration-300"></div>
                 </div>
@@ -886,10 +916,10 @@ const DriverDashboard = () => {
                     </span>
                   </div>
                   <p className="text-gray-700 italic leading-relaxed">
-                    "Impeccably maintained with premium Nappa leather interior,
-                    carbon fiber accents, dual-zone climate control, and
-                    advanced driver assistance systems. Experience the pinnacle
-                    of Italian automotive craftsmanship."
+                    &quot;Impeccably maintained with premium Nappa leather
+                    interior, carbon fiber accents, dual-zone climate control,
+                    and advanced driver assistance systems. Experience the
+                    pinnacle of Italian automotive craftsmanship.&quot;
                   </p>
                 </div>
               </div>

@@ -96,9 +96,9 @@ function WaitPage() {
             <p className="text-slate-400 text-center mb-6 text-sm">
               Scanning nearby drivers • {Math.round(progress)}% complete
             </p>
-            
+
             <div className="w-full h-2.5 bg-slate-700 rounded-full mb-6 overflow-hidden">
-              <div 
+              <div
                 className="h-full bg-gradient-to-r from-green-400 to-green-500 transition-all duration-100 ease-out"
                 style={{ width: `${progress}%` }}
               >
@@ -108,7 +108,7 @@ function WaitPage() {
 
             <div className="flex space-x-2 justify-center mb-6">
               {[...Array(3)].map((_, i) => (
-                <div 
+                <div
                   key={i}
                   className="h-2 w-2 bg-black rounded-full animate-pulse"
                   style={{ animationDelay: `${i * 0.2}s` }}
@@ -126,9 +126,9 @@ function WaitPage() {
               No Drivers Available
             </h2>
             <p className="text-slate-400 mb-6 text-sm">
-              We're expanding our driver network. Please try again shortly.
+              We&apos;re expanding our driver network. Please try again shortly.
             </p>
-            
+
             <div className="flex flex-col gap-3 w-full">
               <button
                 onClick={handleRetry}
@@ -150,30 +150,30 @@ function WaitPage() {
               <div className="relative w-16 h-16 mx-auto">
                 <div className="absolute inset-0 bg-cyan-500/20 rounded-full animate-ping"></div>
                 <div className="absolute inset-0 flex items-center justify-center bg-cyan-500 rounded-full">
-                  <svg 
+                  <svg
                     className="w-8 h-8 text-white animate-check"
-                    fill="none" 
-                    stroke="currentColor" 
+                    fill="none"
+                    stroke="currentColor"
                     viewBox="0 0 24 24"
                   >
-                    <path 
-                      strokeLinecap="round" 
-                      strokeLinejoin="round" 
-                      strokeWidth="2" 
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
                       d="M5 13l4 4L19 7"
                     />
                   </svg>
                 </div>
               </div>
             </div>
-            
+
             <h2 className="text-xl font-semibold text-slate-100 mb-3">
               Driver Matched!
             </h2>
             <p className="text-slate-400 text-sm mb-6">
               Preparing your ride details...
             </p>
-            
+
             <div className="space-y-2">
               <div className="h-1.5 w-full bg-slate-700 rounded-full overflow-hidden">
                 <div className="w-full h-full bg-cyan-500 animate-progress"></div>
