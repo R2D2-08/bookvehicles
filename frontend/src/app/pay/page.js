@@ -295,7 +295,7 @@ export default function PaymentPage() {
         className="space-y-4"
       >
         <textarea
-          placeholder="Share your experience... (Optional)"
+          placeholder="Share your experience... "
           className="w-full p-4 bg-white border-2 border-gray-300 rounded-xl focus:border-purple-500 focus:ring-2 focus:ring-purple-200 resize-none transition-all"
           rows="4"
           value={review}

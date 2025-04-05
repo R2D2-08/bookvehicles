@@ -3,7 +3,7 @@ const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
 const morgan = require("morgan");
-const { sequelize, syncDatabase, User } = require("./models");
+const { sequelize, syncDatabase, Passenger } = require("./models");
 const routes = require("./routes");
 const cookieParser = require("cookie-parser");
 const http = require("http");
@@ -18,6 +18,7 @@ const { Server } = require("socket.io");
 const adminRoutes = require("./routes/user");
 const Driver = require("./models/Drivers");
 const Vehicle = require("./models/Vehicles");
+const User=require("./models/Users");
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 const io = new Server(server, {
   cors: { origin: "http://localhost:3000", credentials: true },
@@ -211,6 +212,8 @@ io.on("connection", (socket) => {
         "Active booking requests:",
         Object.keys(booking_requests).length
       );
+      const passengerDet=await User.findOne({where:{id: data.id}});
+      console.log(passengerDet);
 
       // Notify all active drivers about the new ride request
       Object.values(activeDrivers).forEach((driverSocket) => {
@@ -218,7 +221,7 @@ io.on("connection", (socket) => {
           driverDeails[driverSocket.id].vehicle.type ===
           vehicleTypes[data.rideType]
         ) {
-          driverSocket.emit("new_ride_request", { requestId, data });
+          driverSocket.emit("new_ride_request", { requestId, data, passengerDet });
         }
       });
     } catch (error) {

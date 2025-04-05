@@ -275,9 +275,8 @@ export default function RidePage() {
           <div className="bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl p-6">
             <div className="text-center mb-4">
               <FaClock className="text-3xl mb-2 mx-auto" />
-              <p className="text-sm">Estimated arrival in</p>
-              <h2 className="text-4xl font-bold my-2">{rideDetails.eta}</h2>
-              <p className="text-sm">{rideDetails.distance} remaining</p>
+              <p className="text-sm">Estimated arrival</p>
+
             </div>
 
             <div className="w-full bg-white/20 rounded-full h-2 mb-2">

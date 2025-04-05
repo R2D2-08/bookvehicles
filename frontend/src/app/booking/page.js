@@ -46,6 +46,9 @@ const Booking = () => {
   const locationApi = "https://nominatim.openstreetmap.org/search?format=json&q=";
   const defaultPosition = [51.505, -0.09];
 
+  const [userLocation, setUserLocation] = useState(null);
+
+
   // Immediate state for the inputs
   const [pickLocation, setPickLocation] = useState("");
   const [dropLocation, setDropLocation] = useState("");
@@ -59,6 +62,25 @@ const Booking = () => {
   const [customIcon, setCustomIcon] = useState(null);
   const [isClient, setIsClient] = useState(false); // Track client-side rendering
 
+
+  useEffect(() => {
+    setIsClient(true);
+  
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setUserLocation([position.coords.latitude, position.coords.longitude]);
+        },
+        (error) => {
+          console.error("Geolocation error:", error);
+          toast.error("Failed to fetch your location. Showing default.");
+        }
+      );
+    } else {
+      toast.error("Geolocation is not supported by your browser.");
+    }
+  }, []);
+  
   // Load custom icon for Leaflet
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -177,7 +199,8 @@ const Booking = () => {
       <div className="w-full md:w-2/3 h-[50vh] md:h-screen relative">
         {isClient && (
           <MapContainer
-            center={defaultPosition}
+            center={userLocation || defaultPosition}
+
             zoom={12}
             scrollWheelZoom={false}
             className="w-full h-full rounded-lg"

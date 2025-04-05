@@ -188,7 +188,7 @@ function AdminDashboard() {
                 <h3 className="text-lg font-bold flex items-center gap-2">
                   <CreditCard size={20} /> Revenue
                 </h3>
-                <p className="text-2xl mt-2">${stats.revenue}</p>
+                <p className="text-2xl mt-2">${stats.revenue ?? 0}</p>
               </div>
             </div>
           </>

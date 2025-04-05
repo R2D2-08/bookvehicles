@@ -124,12 +124,29 @@ const DriverDashboard = () => {
   const [rideId, setRideId] = useState(null);
   const [revieweeId, setRevieweeId] = useState(null);
   const [driverDetails, setDriverDetails] = useState(null);
+  const [customIcon, setCustomIcon] = useState(null);
 
   const socketRef = useRef(null);
   const locationIntervalRef = useRef(null);
   const locationErrorCount = useRef(0);
 
   useEffect(() => {
+    if(typeof window !== "undefined") {
+      import("leaflet").then((L) => {
+        setCustomIcon(
+          new L.Icon({
+            iconUrl:
+              "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png",
+            iconSize: [25, 41],
+            iconAnchor: [12, 41],
+            popupAnchor: [1, -34],
+            shadowUrl:
+              "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
+            shadowSize: [41, 41],
+          })
+        );
+      });
+    }
     setIsClient(true);
     fetch("http://localhost:5000/api/users/id", {
       method: "GET",
@@ -245,8 +262,10 @@ const DriverDashboard = () => {
       }
     });
 
-    const handleNewRideRequest = ({ requestId, data }) => {
+    const handleNewRideRequest = ({ requestId, data, passengerDet }) => {
       console.log(`New ride request ${requestId}`);
+      console.log(data);
+      console.log(passengerDet);
       const myDate = new Date(data.booking_date);
       const result = myDate.getTime();
       console.log(result);
@@ -255,8 +274,8 @@ const DriverDashboard = () => {
         ...prev,
         {
           id: requestId,
-          name: "randomUser",
-          phone: "456",
+          name:passengerDet.name,
+          phone: passengerDet.phone_no,
           pickup: data.pickLoc,
           dropoff: data.dropLoc,
           fare: data.price,
@@ -281,6 +300,8 @@ const DriverDashboard = () => {
     };
   }, [driverId]);
 
+  const [latitude, setLatitude]=useState(null);
+  const [longitude,setLongitude]=useState(null);
   useEffect(() => {
     if (!driverId || !socketRef.current) return;
 
@@ -292,7 +313,8 @@ const DriverDashboard = () => {
             locationErrorCount.current = 0;
             if (locationError) setLocationError(false);
 
-            const { latitude, longitude } = coords;
+            setLatitude(coords.latitude);
+            setLongitude(coords.longitude);
 
             // Standardize location format to lat/lng
             const locationData = {
@@ -869,29 +891,7 @@ const DriverDashboard = () => {
                 </div>
 
                 {/* Rating & Description */}
-                <div className="mt-6 p-5 bg-gradient-to-r from-red-50 to-orange-50 rounded-xl border border-red-100/50">
-                  <div className="flex items-center mb-3">
-                    <div className="flex">
-                      {[...Array(5)].map((_, i) => (
-                        <StarIcon
-                          key={i}
-                          className={`w-5 h-5 ${
-                            i < 4 ? "text-amber-400" : "text-gray-300"
-                          }`}
-                        />
-                      ))}
-                    </div>
-                    <span className="ml-2 text-sm font-medium text-gray-700">
-                      4.9/5.0 (128 reviews)
-                    </span>
-                  </div>
-                  <p className="text-gray-700 italic leading-relaxed">
-                    "Impeccably maintained with premium Nappa leather interior,
-                    carbon fiber accents, dual-zone climate control, and
-                    advanced driver assistance systems. Experience the pinnacle
-                    of Italian automotive craftsmanship."
-                  </p>
-                </div>
+                
               </div>
             </div>
           </div>
@@ -1026,12 +1026,12 @@ const DriverDashboard = () => {
               {isClient && !showReviewModal && (
                 <div className="bg-gray-200 shadow-lg rounded-xl w-1/2 h-80">
                   <MapContainer
-                    center={[51.505, -0.09]}
+                    center={[latitude, longitude]}
                     zoom={13}
                     className="h-full w-full"
                   >
                     <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-                    <Marker position={[51.505, -0.09]}>
+                    <Marker position={[latitude, longitude]} icon={customIcon}>
                       <Popup>A simple popup</Popup>
                     </Marker>
                   </MapContainer>

@@ -15,11 +15,7 @@ function Login() {
   });
 
   // Redirect if already authenticated
-  useEffect(() => {
-    if (isAuthenticated) {
-      router.replace("/booking");
-    }
-  }, [isAuthenticated, router]);
+
 
   const handleChange = (e) => {
     setUser({
@@ -57,7 +53,13 @@ function Login() {
       localStorage.setItem("user", data.name);
       localStorage.setItem("user_id", data.id);
       toast.success("Login Successful");
-      router.push("/booking");
+      if(data.role === "admin") {
+        router.replace("/admin");
+      } else if(data.role === "driver") {
+        router.replace("/driverdash");
+      } else {
+        router.replace("/booking");
+      }
     } catch (error) {
       console.error("Login error:", error);
       toast.error("Internal Server Error");
