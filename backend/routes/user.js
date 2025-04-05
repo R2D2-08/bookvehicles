@@ -17,7 +17,7 @@ const { serialize } = require("v8");
 const { doesNotMatch } = require("assert");
 const { authenticate, authorize } = require("../middleware/auth");
 const { decode } = require("punycode");
-const { where } = require("sequelize");
+const { where, Sequelize } = require("sequelize");
 const qs = require('qs')
 const uploadDir = path.join(__dirname, "../uploads");
 const pool = require("../db");
@@ -161,6 +161,21 @@ router.post(
     }
   }
 );
+
+router.post("/get-points", async (req, res) => {
+  try {
+    const {userId} = req.body;
+    console.log(userId);
+    if(!userId) {
+      return res.status(400).json({ error: "User ID is required" });
+    }
+    const user = await Passenger.findByPk(userId);
+    if (!user) return res.status(404).json({ error: "User not found" });
+    res.status(200).json({ points: user.points });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+})
 router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -345,7 +360,7 @@ router.post("/reviews", async (req, res) => {
 router.post("/update-payment", async (req, res) => {
   try {
     console.log("Received body:", req.body);
-    let { transaction_id, amount, payment_status } = req.body;
+    let { transaction_id, amount, payment_status, userId } = req.body;
 
     // Ensure transaction_id is a string
     transaction_id = String(transaction_id);
@@ -356,16 +371,24 @@ router.post("/update-payment", async (req, res) => {
     }
 
     // Ensure amount is a decimal
-    amount = parseFloat(amount);
+    amount = parseFloat(amount) / 100;
 
     // Insert or update the payment
-    const query = `
-      INSERT INTO payments (transaction_id, amount, payment_status, createdAt, updatedAt)
-      VALUES (?, ?, ?, NOW(), NOW())
-      ON DUPLICATE KEY UPDATE amount = VALUES(amount), payment_status = VALUES(payment_status), updatedAt = NOW();
-    `;
+    const paymentRes = await Payment.create({
+      transaction_id,
+      amount,
+      payment_status,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
 
-    await pool.query(query, [transaction_id, amount, payment_status]);
+    const incrementedPoints = Math.ceil(amount / 100);
+
+    const rewardRes = await Passenger.update(
+      { points: Sequelize.literal(`points + ${incrementedPoints}`)},
+      { where: { user_id: userId } }
+    );
+    
 
     res.json({ success: true, message: "Payment updated successfully" });
   } catch (error) {

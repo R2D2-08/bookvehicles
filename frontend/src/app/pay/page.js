@@ -15,6 +15,7 @@ import {
 import { GiCheckMark } from "react-icons/gi";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { point } from "leaflet";
 
 
 export default function PaymentPage() {
@@ -25,6 +26,7 @@ export default function PaymentPage() {
   const [price, setPrice] = useState(0);
   const [rideId, setRideId] = useState(null);
   const [revieweeId, setRevieweeId] = useState(null);
+  const [points, setPoints] = useState(null);
 
   useEffect(() => {
     const fetchRideDetails = async () => {
@@ -49,7 +51,32 @@ export default function PaymentPage() {
       }
     };
 
+    const fetchUserPoints = async () => {
+      console.log("User id - ", localStorage.getItem("userId"));
+      try {
+        const response = await fetch("http://localhost:5000/api/users/get-points", {
+          method: "POST",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ userId: localStorage.getItem("userId") }),
+        });
+    
+        if (!response.ok) {
+          console.error("Failed to fetch user points");
+          return;
+        }
+    
+        const data = await response.json();
+        setPoints(data.points);
+      } catch (error) {
+        console.error("Error fetching user points:", error);
+      }
+    };
+    
     fetchRideDetails();
+    fetchUserPoints();
   }, []);
 
   const handlePayment = () => {
@@ -58,10 +85,12 @@ export default function PaymentPage() {
     script.async = true;
     document.body.appendChild(script);
 
+    const userId = localStorage.getItem("userId") || 7;
+
     script.onload = () => {
       const options = {
         key: "rzp_test_pCp8FyWWmu8vhd",
-        amount: price * 100,
+        amount: price * 100 - Math.ceil(parseFloat(points)) * 100,
         currency: "INR",
         name: "Vechicle Booking Service",
         description: "Ride Payment",
@@ -73,8 +102,10 @@ export default function PaymentPage() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               transaction_id: response.razorpay_payment_id,
-              amount: price * 100, // Ensure price is in decimal format
+              amount: price * 100 - Math.floor(parseFloat(points)) * 100, // Ensure price is in decimal format
               payment_status: 1, // Assuming 1 means success
+              credentials: "include",
+              userId
             }),
           })
           .then(res => res.json())
@@ -171,11 +202,11 @@ export default function PaymentPage() {
         <div className="space-y-3">
           <div className="flex justify-between">
             <span className="text-gray-600">Pickup:</span>
-            <span className="font-medium">Central Park</span>
+            <span className="font-medium">{localStorage.getItem("pickLocation") ?? "Central Park"}</span>
           </div>
           <div className="flex justify-between">
             <span className="text-gray-600">Dropoff:</span>
-            <span className="font-medium">Times Square</span>
+            <span className="font-medium">{localStorage.getItem("dropLocation") ?? "Times Square"}</span>
           </div>
           <div className="flex justify-between">
             <span className="text-gray-600">Distance:</span>
@@ -195,7 +226,9 @@ export default function PaymentPage() {
             <div className="bg-white p-4 rounded-lg shadow-inner">
               <div className="flex justify-between text-lg font-bold mb-2">
                 <span>Total:</span>
-                <span>₹450.00</span>
+                <span className="line-through">₹{localStorage.getItem("ridePrice") ?? 0}</span>
+                <span>₹{(parseFloat(localStorage.getItem("ridePrice")) - Math.ceil(parseFloat(points))) || 0
+                }</span>
               </div>
               <div className="text-sm text-gray-500">
                 Includes all taxes and charges
