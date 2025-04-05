@@ -30,7 +30,14 @@ const ProtectedRoutes = ({ children, roles = []}) => {
         if(!roles.includes(res.role)) {
           console.log(res.role);
           toast.error("Not Authorized"); 
-          router.replace("/booking");
+          if(res.role === "admin") {
+            router.replace("/admin");
+          } else if(res.role === "driver") {
+            router.replace("/driverdash");
+          } else {
+            console.log("bruh");
+            router.replace("/booking");
+          }
           setLoading(false);
           return;
         }

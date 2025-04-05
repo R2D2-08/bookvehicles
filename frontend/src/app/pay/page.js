@@ -171,11 +171,11 @@ export default function PaymentPage() {
         <div className="space-y-3">
           <div className="flex justify-between">
             <span className="text-gray-600">Pickup:</span>
-            <span className="font-medium">Central Park</span>
+            <span className="font-medium">{localStorage.getItem("pickLocation") ?? "Central Park"}</span>
           </div>
           <div className="flex justify-between">
             <span className="text-gray-600">Dropoff:</span>
-            <span className="font-medium">Times Square</span>
+            <span className="font-medium">{localStorage.getItem("dropLocation") ?? "Times Square"}</span>
           </div>
           <div className="flex justify-between">
             <span className="text-gray-600">Distance:</span>
@@ -262,7 +262,7 @@ export default function PaymentPage() {
         className="space-y-4"
       >
         <textarea
-          placeholder="Share your experience... (Optional)"
+          placeholder="Share your experience... "
           className="w-full p-4 bg-white border-2 border-gray-300 rounded-xl focus:border-purple-500 focus:ring-2 focus:ring-purple-200 resize-none transition-all"
           rows="4"
           value={review}

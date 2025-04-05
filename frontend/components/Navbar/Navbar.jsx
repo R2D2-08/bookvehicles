@@ -29,7 +29,7 @@ export default function Navbar() {
 
   const links = [
     { href: "/", label: "Ride" },
-    { href: "/driversignup", label: "Drive" },
+    { href: "/signup/driver", label: "Drive" },
     { href: "/", label: "Help" },
     { href: "/signup", label: "Sign up" },
   ];
